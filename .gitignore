@@ -2,6 +2,8 @@
 .env.account*
 !.env.account.example
 .venv/
+.venv-doubao-backup/
+.test-tmp/
 __pycache__/
 *.py[cod]
 .pytest_cache/
@@ -11,4 +13,36 @@ config/tasks.json
 config/tasks/
 config.json
 storage-state.json
+storage-state-*.json
+storage-state-*.json.tmp
 storage_state/
+
+# Local runtime and diagnostic outputs
+*.log
+账户日志.md
+_backup/
+_shots_front/
+ui-prototype/_shots/
+login_debug/
+stickers_debug/
+.venv-doubao-backup/
+.test-tmp/
+
+# Local account/runtime configuration
+config/accounts.json
+
+# Generated handoff and scratch files
+douyin-auto-fire-交接包.zip
+_debug_*.py
+_final_check.py
+_probe_*.py
+_reset_account*.py
+_restore_account*.py
+_shots_frontend.py
+_test_api.py
+_verify_frontend.py
+gen_stickers.py
+patch_stickers_sample.py
+shot_sticker_*.py
+config/stickers_crawled.json
+config/stickers_scrape_dump.json

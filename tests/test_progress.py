@@ -188,6 +188,49 @@ class TestTargetProgress:
 class TestProgressFactories:
     """测试进度工厂函数。"""
 
+
+def test_gbk_console_does_not_interrupt_progress(monkeypatch):
+    """Windows GBK 控制台无法编码装饰字符时，任务仍能推进到完成。"""
+    class GbkConsole:
+        def isatty(self):
+            return True
+
+        def write(self, value):
+            value.encode("gbk", errors="strict")
+
+        def flush(self):
+            pass
+
+    monkeypatch.setattr(sys, "stdout", GbkConsole())
+    stages = MultiStageProgress(["打开浏览器", "验证登录", "发送消息"])
+    stages.start_stage(0)
+    stages.start_stage(2, total_items=1)
+    target = TargetProgress(1, label="好友")
+    target.start_target("😀")
+    target.finish_target("success")
+    stages.update_progress()
+    stages.finish_stage()
+    stages.finish_all()
+    assert target.success == 1
+
+
+def test_broken_console_does_not_interrupt_progress(monkeypatch):
+    class BrokenConsole:
+        def isatty(self):
+            return True
+
+        def write(self, value):
+            raise BrokenPipeError("closed")
+
+        def flush(self):
+            pass
+
+    monkeypatch.setattr(sys, "stdout", BrokenConsole())
+    bar = ProgressBar(total=1)
+    bar.update()
+    bar.finish()
+    assert bar.current == 1
+
     def test_create_account_progress(self):
         """测试创建账号进度。"""
         from app.progress import create_account_progress

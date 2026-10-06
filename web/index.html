@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>自动续火花 · 管理控制台</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23FE2C55'/%3E%3Cpath d='M34 6L14 34h12l-4 24 24-32H32l2-20z' fill='white'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#F8FAFC;
+  --card:#FFFFFF;
+  --line:#E6EAF0;
+  --ink:#101828;
+  --ink-2:#475467;
+  --ink-3:#98A2B3;
+  --accent:#1769AA;
+  --accent-soft:#EAF5FF;
+  --cyan:#25F4EE;
+  --sidebar:#FFFFFF;
+  --sidebar-2:#F2F4F7;
+  --ok:#16A34A;
+  --ok-soft:#E9F7EF;
+  --warn:#D97706;
+  --warn-soft:#FDF3E3;
+  --bad:#DC2626;
+  --bad-soft:#FDECEC;
+  --radius:12px;
+  --shadow:none;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei UI","Microsoft YaHei","PingFang SC",sans-serif;
+  --mono:"Cascadia Mono","Consolas","Microsoft YaHei",monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid rgba(0,102,204,.28);outline-offset:2px}
+button:active:not([disabled]){transform:scale(.98)}
+
+/* ===== 布局骨架 ===== */
+.app{display:flex;min-height:100vh}
+.sidebar{width:220px;flex:none;background:var(--sidebar);color:var(--ink-2);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;border-right:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;padding:20px 20px 18px}
+.brand-logo{width:38px;height:38px;border-radius:11px;background:#FE2C55;display:flex;align-items:center;justify-content:center;flex:none}
+.brand-logo svg{width:18px;height:18px;stroke:#fff}
+.brand-name{font-weight:600;font-size:17px;color:var(--ink);letter-spacing:-.2px}
+.brand-sub{font-size:13px;color:var(--ink-3);margin-top:2px}
+.nav{flex:1;padding:6px 12px;overflow-y:auto}
+.nav-label{font-size:12px;color:var(--ink-3);padding:18px 10px 8px;letter-spacing:.2px}
+.nav-item{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:11px;color:var(--ink-2);font-size:15px;cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:background .15s,color .15s}
+.nav-item svg{width:17px;height:17px;stroke:currentColor;flex:none}
+.nav-item:hover{background:var(--sidebar-2);color:var(--ink)}
+.nav-item.active{background:var(--sidebar-2);color:var(--ink);font-weight:600}
+.nav-item.active::after{display:none}
+.sidebar-foot{padding:16px 20px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-2)}
+.sidebar-foot .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ok);margin-right:6px;vertical-align:1px}
+
+.main{flex:1;min-width:0;padding:38px clamp(24px,4vw,60px) 72px;max-width:1440px;margin:0 auto}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:34px;flex-wrap:wrap}
+.page-title{font-size:38px;font-weight:600;letter-spacing:-.7px;line-height:1.12}
+.page-desc{color:var(--ink-2);font-size:17px;line-height:1.5;margin-top:13px;max-width:740px}
+.head-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+/* ===== 按钮 ===== */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;padding:11px 20px;font-size:15px;font-weight:600;border:1px solid transparent;transition:all .15s;white-space:nowrap;min-height:44px}
+.btn svg{width:15px;height:15px;stroke:currentColor}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover,.btn-send:hover{background:#0054A8}
+.btn-send{background:var(--accent)}
+.btn-ghost{background:#fff;border-color:var(--accent);color:var(--accent)}
+.btn-ghost:hover{background:var(--accent-soft)}
+.btn-sm{padding:7px 15px;font-size:14px;min-height:36px}
+.btn-danger{background:#fff;border-color:#F3C7C7;color:var(--bad)}
+.btn-danger:hover{background:var(--bad-soft)}
+.btn[disabled]{opacity:.55;cursor:not-allowed}
+
+/* ===== 卡片与统计 ===== */
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:30px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:26px;min-height:158px}
+.card .k{font-size:15px;color:var(--ink-2);display:flex;align-items:center;gap:6px;margin-bottom:12px}
+.card .k svg{width:14px;height:14px;stroke:var(--ink-3)}
+.card .v{font-size:27px;font-weight:600;letter-spacing:-.3px;line-height:1.18}
+.card .s{font-size:14px;color:var(--ink-3);margin-top:10px;display:flex;align-items:center;gap:5px}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:5px 11px;border-radius:20px;line-height:1.3}
+.pill .pd{width:6px;height:6px;border-radius:50%}
+.pill-ok{background:var(--ok-soft);color:var(--ok)}.pill-ok .pd{background:var(--ok)}
+.pill-warn{background:var(--warn-soft);color:var(--warn)}.pill-warn .pd{background:var(--warn)}
+.pill-bad{background:var(--bad-soft);color:var(--bad)}.pill-bad .pd{background:var(--bad)}
+.pill-gray{background:#F0F1F4;color:var(--ink-2)}.pill-gray .pd{background:var(--ink-3)}
+.pill-red{background:var(--accent-soft);color:var(--accent)}.pill-red .pd{background:var(--accent)}
+
+/* ===== 总览：验证状态与核心指标 ===== */
+#view-dashboard .page-head{margin-bottom:22px}
+#view-dashboard .page-title{font-size:34px;letter-spacing:-.6px}
+#view-dashboard .page-desc{font-size:16px;margin-top:7px}
+.dash-readiness{display:flex;align-items:center;gap:13px;padding:14px 16px;margin-bottom:16px;background:#fff;border:1px solid var(--line);border-radius:12px}
+.dash-readiness-icon{width:30px;height:30px;border-radius:8px;background:var(--ok-soft);color:var(--ok);display:flex;align-items:center;justify-content:center;flex:none}.dash-readiness-icon svg{width:16px;height:16px;stroke:currentColor}
+.dash-readiness-main{display:flex;align-items:baseline;gap:9px;min-width:0;flex-wrap:wrap}.dash-readiness-title{font-size:14px;font-weight:600;color:var(--ink)}.dash-readiness-meta{font-size:13px;color:var(--ink-3)}.dash-readiness-note{font-size:13px;color:var(--ink-2);margin-left:auto;white-space:nowrap}
+.dash-readiness.is-pending .dash-readiness-icon{background:var(--warn-soft);color:var(--warn)}.dash-readiness.is-disabled .dash-readiness-icon{background:#F0F1F4;color:var(--ink-3)}
+#view-dashboard .cards{gap:12px;margin-bottom:24px}.dashboard-card{position:relative;min-height:142px;padding:18px 18px 16px;border-radius:12px;overflow:hidden}.dashboard-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:#C9D8EE}.dashboard-card.card-account::before{background:var(--accent)}.dashboard-card.card-record::before{background:var(--ok)}
+.dashboard-card .k{font-size:13px;font-weight:600;color:var(--ink-2);margin:0 0 18px;justify-content:space-between}.dashboard-card .dash-icon{width:27px;height:27px;border-radius:7px;background:#F4F7FB;color:#60708A;display:inline-flex;align-items:center;justify-content:center}.dashboard-card .dash-icon svg{width:14px;height:14px;stroke:currentColor}.dashboard-card.card-account .dash-icon{background:var(--accent-soft);color:var(--accent)}.dashboard-card.card-record .dash-icon{background:var(--ok-soft);color:var(--ok)}
+.dashboard-card .v{font-size:28px;letter-spacing:-.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dashboard-card.card-schedule .v{font-size:23px;letter-spacing:-.4px}.dashboard-card .s{font-size:13px;margin-top:7px;color:var(--ink-3)}
+@media(max-width:760px){#view-dashboard .page-title{font-size:30px}.dash-readiness{align-items:flex-start}.dash-readiness-note{margin-left:43px;margin-top:-5px;white-space:normal}.dashboard-card{min-height:126px}}
+
+/* ===== 面板 ===== */
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:24px;overflow:hidden}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:23px 26px;border-bottom:1px solid var(--line)}
+.panel-title{font-size:20px;font-weight:600;display:flex;align-items:center;gap:8px}
+.panel-title svg{width:16px;height:16px;stroke:var(--ink-2)}
+.panel-sub{font-size:15px;color:var(--ink-3);line-height:1.45;margin-top:6px}
+.panel-body{padding:26px}
+
+/* ===== 表格 ===== */
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+th{font-size:14px;color:var(--ink-2);font-weight:600;text-align:left;padding:14px 18px;border-bottom:1px solid var(--line);background:#FAFAFC}
+td{padding:15px 18px;border-bottom:1px solid #F0F0F2;font-size:15px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:#FBFCFD}
+td .name{font-weight:600;font-size:16px}
+td .sub{font-size:14px;color:var(--ink-3);margin-top:4px}
+.row-actions{display:flex;gap:6px;justify-content:flex-end}
+.icon-btn{width:36px;height:36px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink-2);display:inline-flex;align-items:center;justify-content:center;transition:all .15s}
+.icon-btn svg{width:14px;height:14px;stroke:currentColor}
+.icon-btn:hover{border-color:#CDD2DA;color:var(--ink);background:#FAFBFC}
+.icon-btn.danger:hover{border-color:#F3C7C7;color:var(--bad);background:var(--bad-soft)}
+.text-btn{background:none;border:none;color:var(--accent);font-size:14px;font-weight:600;padding:8px 10px;border-radius:8px}
+.text-btn:hover{background:var(--accent-soft)}
+.text-btn:disabled{color:var(--ink-3);opacity:.55;cursor:not-allowed;background:transparent}
+.friend-table .row-actions{white-space:nowrap}.friend-table .text-btn{padding:8px 6px}
+.text-btn.danger{color:var(--bad)}
+.text-btn.danger:hover{background:var(--bad-soft)}
+
+/* ===== 好友列表：色块标识与可展开内容 ===== */
+.friend-table .friend-expand-cell{width:48px;padding-right:0}.friend-expand{width:28px;height:28px;border:0;border-radius:6px;background:transparent;color:var(--ink-3);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}.friend-expand:hover{background:#EEF4FF;color:var(--accent)}.friend-expand svg{width:16px;height:16px;stroke:currentColor;transition:transform .15s}.friend-expand[aria-expanded="true"] svg{transform:rotate(90deg)}
+.friend-identity{display:flex;align-items:center;gap:10px}.friend-color{width:28px;height:28px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:none}.friend-tone-0{background:#EAF4FF;color:#2167B6}.friend-tone-1{background:#EEF2FF;color:#5B5FC7}.friend-tone-2{background:#E8F7F2;color:#16816A}.friend-tone-3{background:#FFF4E5;color:#A45B12}.friend-tone-4{background:#F5EDFF;color:#7A4EAE}
+.friend-row td{background:#fff}.friend-row.is-expanded td{background:#FBFCFE}.friend-mode{display:flex;align-items:center;gap:8px}.friend-mode-note{font-size:12px;color:var(--ink-3)}.friend-detail td{padding:0;background:#FBFCFE}.friend-detail-content{margin:0 18px 14px 76px;padding:12px 14px;background:#fff;border:1px solid #E7ECF2;border-radius:8px}.friend-detail-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;font-size:12px;color:var(--ink-3)}.friend-detail-list{display:flex;flex-direction:column;gap:6px}.friend-detail-item{display:flex;align-items:flex-start;gap:8px;padding:8px 9px;border-radius:6px;background:#F8FAFC;font-size:13px;color:var(--ink-2)}.friend-detail-item .type-tag{margin-top:1px}.friend-detail-item .content{min-width:0;word-break:break-all}.friend-random-choices{display:flex;flex-direction:column;gap:5px;margin-top:7px;padding-top:7px;border-top:1px solid #E9EDF2}.friend-random-choice{display:flex;gap:7px;align-items:center;font-size:12px;color:var(--ink-2)}
+.friend-send-duplicate{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:14px;padding:11px 12px;background:#F8FAFC;border:1px solid #E7ECF2;border-radius:8px}.friend-send-duplicate-title{font-size:13px;font-weight:600;color:var(--ink)}.friend-send-duplicate-note{font-size:12px;color:var(--ink-3);margin-top:2px}
+.activity-scope{display:inline-flex;align-items:center;font-size:12px;font-weight:600;padding:4px 8px;border-radius:6px;background:#F3F6FA;color:#52627A}.activity-scope.friend{background:var(--accent-soft);color:var(--accent)}.activity-scope.scheduled{background:#EEF2FF;color:#5B5FC7}.run-outcome{display:flex;gap:14px;align-items:flex-start}.run-outcome-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;flex:none}.run-outcome.success .run-outcome-icon{background:var(--ok-soft);color:var(--ok)}.run-outcome.failed .run-outcome-icon{background:var(--bad-soft);color:var(--bad)}.run-outcome.skipped .run-outcome-icon{background:#F0F1F4;color:#667085}.run-outcome-title{font-size:16px;font-weight:600;color:var(--ink)}.run-outcome-note{font-size:13px;color:var(--ink-2);line-height:1.65;margin-top:4px}.run-outcome-meta{font-size:12px;color:var(--ink-3);margin-top:8px}
+.friend-time{font-size:14px;font-weight:600;color:var(--ink)}.friend-time small{display:block;font-size:12px;font-weight:400;color:var(--ink-3);margin-top:2px}.friend-schedule-detail{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-2)}.friend-schedule-detail strong{font-size:15px;color:var(--ink)}
+#view-friends .page-head{margin-bottom:22px;align-items:center}
+#view-friends .page-title{font-size:32px;letter-spacing:-.5px}
+#view-friends .panel-head{padding:18px 22px}
+#view-friends .panel-title{font-size:18px}
+#view-friends #friend-count{font-size:14px;font-weight:400;color:var(--ink-3);margin-left:8px}
+#view-friends .friend-row td{padding-top:13px;padding-bottom:13px}
+#view-friends .friend-detail-head{font-size:13px;font-weight:600;color:var(--ink-2)}
+#view-friends .friend-detail-item{font-size:14px}
+#f-custom-wrap>label{display:block;font-size:14px;font-weight:600;margin-bottom:9px}
+@media(max-width:760px){.friend-detail-content{margin-left:42px}.friend-mode-note{display:none}}
+
+/* ===== 开关 ===== */
+.switch{position:relative;width:42px;height:24px;flex:none;cursor:pointer}
+.switch input{opacity:0;width:0;height:0;position:absolute}
+.switch .track{position:absolute;inset:0;background:#D4D8DF;border-radius:20px;transition:background .2s}
+.switch .thumb{position:absolute;width:20px;height:20px;border-radius:50%;background:#fff;top:2px;left:2px;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:transform .2s}
+.switch input:checked + .track{background:var(--accent)}
+.switch input:checked + .track + .thumb{transform:translateX(18px)}
+
+/* ===== 徽章/状态 ===== */
+.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;vertical-align:1px}
+.banner{display:flex;gap:12px;align-items:flex-start;border-radius:12px;padding:16px 18px;font-size:15px;line-height:1.5;margin-bottom:24px;border:1px solid}
+.banner svg{width:16px;height:16px;flex:none;margin-top:1px;stroke:currentColor}
+.banner-info{background:#F0F4FA;border-color:#DFE8F4;color:#284767}
+.banner-warn{background:var(--warn-soft);border-color:#F6DFB8;color:#92600A}
+.banner b{font-weight:600}
+.mono{font-family:var(--mono);font-size:13px;background:#F4F5F7;border:1px solid #EDEFF2;border-radius:6px;padding:2px 7px;color:#3D4452}
+
+/* ===== 表单 ===== */
+.field{margin-bottom:22px}
+.field label{display:block;font-size:15px;font-weight:600;margin-bottom:9px}
+.field .hint{font-size:14px;color:var(--ink-3);margin-top:8px;line-height:1.5}
+.input,textarea.input,select.input{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 14px;font-size:16px;background:#fff;color:var(--ink);outline:none;transition:border-color .15s,box-shadow .15s;min-height:44px}
+.input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,102,204,.12)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+.inline-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+
+/* ===== 弹窗 ===== */
+.modal-mask{position:fixed;inset:0;background:rgba(16,16,22,.45);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+.modal-mask.open{display:flex}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:480px;box-shadow:0 24px 64px rgba(0,0,0,.18);overflow:hidden;animation:pop .18s ease}
+@keyframes pop{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line)}
+.modal-title{font-size:20px;font-weight:600}
+.modal-close{width:28px;height:28px;border-radius:7px;border:none;background:#F3F4F6;color:var(--ink-2);display:flex;align-items:center;justify-content:center}
+.modal-close svg{width:14px;height:14px;stroke:currentColor}
+.modal-body{padding:24px;max-height:64vh;overflow-y:auto}
+.modal-foot{display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid var(--line);background:#FAFBFC}
+
+/* ===== Toast ===== */
+#toast-zone{position:fixed;top:20px;right:20px;z-index:200;display:flex;flex-direction:column;gap:10px}
+.toast{background:#1D1D1F;color:#fff;font-size:15px;border-radius:10px;padding:13px 18px;display:flex;align-items:center;gap:9px;box-shadow:0 8px 24px rgba(0,0,0,.18);animation:slidein .2s ease;max-width:380px}
+.toast svg{width:16px;height:16px;stroke:var(--cyan);flex:none}
+@keyframes slidein{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
+.toast.out{opacity:0;transform:translateX(20px);transition:all .25s}
+.toast.err svg{stroke:var(--bad)}
+
+/* ===== 账号卡片 ===== */
+.account-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.account-card{border:1px solid var(--line);border-radius:12px;padding:20px;background:#fff;position:relative;min-height:248px;display:flex;flex-direction:column}
+.account-card:hover{border-color:#C6D2E3}
+.account-card .top{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.avatar{width:46px;height:46px;border-radius:10px;background:#334155;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:17px;flex:none;overflow:hidden}
+.avatar.on{background:#334155}.avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.account-card .nick{font-weight:600;font-size:18px;letter-spacing:-.2px;display:flex;align-items:center;gap:8px}.account-id{font-size:12px;color:var(--ink-3);margin-top:2px}
+.account-state-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 16px}.account-state{padding:10px 11px;background:#F8FAFC;border:1px solid #EDF0F4;border-radius:8px}.account-state .label{font-size:12px;color:var(--ink-3);margin-bottom:4px}.account-state .value{font-size:13px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:5px}.account-state .value .pd{width:6px;height:6px;border-radius:50%;background:currentColor}.account-state .value.good{color:var(--ok)}.account-state .value.pending{color:var(--warn)}.account-state .value.muted{color:var(--ink-3)}
+.account-card .meta{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-3);margin-bottom:12px;flex-wrap:wrap}
+.account-card .ops{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-top:auto;padding-top:14px;border-top:1px solid var(--line)}.account-switch{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--ink-2)}.account-actions{display:flex;align-items:center;gap:3px;flex-wrap:wrap;justify-content:flex-end}
+.tag-default{font-size:11px;font-weight:600;background:var(--accent-soft);color:var(--accent);border:1px solid #CFE4FA;padding:3px 7px;border-radius:5px;letter-spacing:0}
+.add-card{border:1.5px dashed #CDD2DA;border-radius:var(--radius);background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;color:var(--ink-2);cursor:pointer;min-height:150px;transition:all .15s}
+.add-card:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.add-card svg{width:22px;height:22px;stroke:currentColor}
+
+/* ===== 消息编辑 ===== */
+.msg-list{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+.msg-item{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:10px;padding:11px 14px;background:#fff}
+.msg-item .type-tag{font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;flex:none}
+.tt-text{background:#EEF4FF;color:#2458B3}
+.tt-random{background:#F3E8FF;color:#7C3AED}
+.tt-sticker{background:var(--accent-soft);color:var(--accent)}
+.tt-image{background:#E6FBF8;color:#0E8F7E}
+.msg-item .content{flex:1;font-size:15px;color:var(--ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.msg-item .content .gray{color:var(--ink-2)}
+
+/* ===== 发送内容：默认模板与好友覆盖 ===== */
+.content-workspace{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;position:relative}
+#view-messages .page-head{position:sticky;top:0;z-index:20;align-items:center;margin:0 -2px 12px;padding:12px 2px;background:var(--bg)}
+#view-messages .page-title{font-size:28px;letter-spacing:-.45px}
+.messages-save-actions{display:flex;align-items:center;gap:12px}.messages-save-actions .save-state{margin:0;min-height:auto;white-space:nowrap}
+.template-head{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:14px 20px;border-bottom:1px solid var(--line)}
+.template-kicker{font-size:11px;font-weight:700;letter-spacing:.45px;color:var(--accent);margin-bottom:2px}.template-title{font-size:18px;font-weight:600;letter-spacing:-.2px}.template-count{font-size:12px;color:var(--ink-3);margin-top:3px}
+.template-list{padding:10px 20px 14px}.template-list .msg-list{margin:0;gap:7px}
+.template-list .msg-item{min-height:42px;padding:8px 11px;gap:10px}.template-list .msg-item .content{font-size:14px}.template-list .msg-item .type-tag{padding:3px 7px}
+.override-section{margin-top:18px}.override-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:0 0 8px 2px}
+.override-title{font-size:16px;font-weight:600;letter-spacing:-.15px}
+.override-list{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.override-row{display:grid;grid-template-columns:minmax(160px,1fr) minmax(180px,.8fr) auto;align-items:center;gap:18px;padding:12px 16px;border-bottom:1px solid var(--line)}.override-row:last-child{border-bottom:none}
+.override-name{font-weight:600;font-size:14px}
+.mode-badge{display:inline-flex;align-items:center;gap:6px;width:max-content;font-size:12px;font-weight:600;padding:4px 8px;border-radius:999px}.mode-global{background:#F1F3F5;color:#4B5563}.mode-custom{background:#EEF4FF;color:#2458B3}.mode-badge .pd{width:6px;height:6px;border-radius:50%;background:currentColor}
+.override-detail{font-size:12px;color:var(--ink-3);margin-top:4px}.override-action{justify-self:end}.save-state{font-size:13px;color:var(--ink-3);margin-top:10px;text-align:right;min-height:20px}
+.random-choice{display:grid;grid-template-columns:94px minmax(0,1fr) 34px;gap:8px;align-items:center;margin:8px 0}.random-choice .input{min-height:38px;padding:8px 10px;font-size:13px}
+@media(max-width:760px){#view-messages .page-head{position:static}.template-head,.override-head{align-items:flex-start;flex-direction:column}.override-row{grid-template-columns:1fr;gap:10px}.override-action{justify-self:start}.template-list{padding:16px}.random-choice{grid-template-columns:82px minmax(0,1fr) 34px}.messages-save-actions{width:100%;justify-content:space-between}}
+
+/* ===== 自动化：计划、记录、通知 ===== */
+#view-schedule .page-head,#view-logs .page-head,#view-notify .page-head{align-items:center;margin-bottom:14px}
+.automation-status-grid{display:grid;grid-template-columns:1fr 1.28fr;gap:12px;margin-bottom:14px}
+.automation-status-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px;min-height:100px}
+.automation-status-card .k{font-size:12px;color:var(--ink-3);margin-bottom:7px}.automation-status-card .v{font-size:22px;font-weight:600;letter-spacing:-.35px;line-height:1.25}.automation-status-card .v.ready{color:var(--ok)}.automation-status-card .s{font-size:12px;color:var(--ink-3);margin-top:5px}
+.automation-panel .panel-head{padding:15px 20px}.automation-panel .panel-body{padding:18px 20px}.automation-panel .panel-sub{display:none}.automation-panel .field{margin-bottom:18px}.automation-panel .field:last-child{margin-bottom:0}
+.automation-field-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.time-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.time-row .hint{font-size:12px}
+.automation-switch{display:flex;align-items:center;gap:10px;min-height:40px;font-size:13px;color:var(--ink-2)}
+.main.warm-workspace{background:var(--bg)}
+.acct-bar,.card,.panel,.account-card,.content-workspace,.override-list,.automation-status-card{border-color:var(--line);box-shadow:0 1px 3px rgba(16,24,40,.035)}
+.dashboard-card.card-schedule,.automation-status-card.next-run{background:#fff;border-color:#DCEAF5;box-shadow:inset 3px 0 #5FA8D3,0 1px 3px rgba(16,24,40,.035)}
+.dashboard-card.card-schedule::before{background:#5FA8D3}
+.dashboard-validation-note{background:#F3F7FC;border-color:#D8E6F3;color:#526B83;box-shadow:0 1px 2px rgba(46,78,109,.04)}
+.dashboard-validation-note strong{color:#3C5973}
+.next-run-time{display:block;font-size:34px;font-weight:650;letter-spacing:-1px;line-height:1;color:var(--accent)}
+.next-run-date{display:block;margin-top:7px;font-size:12px;font-weight:500;letter-spacing:0;color:#8A94A6}
+.automation-status-card .v .next-run-time{font-size:30px}.automation-status-card .v .next-run-date{margin-top:6px}
+.log-layout{display:grid;grid-template-columns:minmax(300px,.86fr) minmax(0,1.5fr);gap:14px;align-items:start}.log-layout .panel{margin-bottom:0}.log-result .panel-body{padding:20px}.log-history .panel-head{display:flex;align-items:center;justify-content:space-between}.log-count{font-size:12px;color:var(--ink-3)}
+.log-details{margin:14px 0 20px}.technical-details{font-size:12px;margin-top:14px;padding-top:12px}.technical-details summary{font-weight:500}.result-summary{font-size:17px;letter-spacing:-.15px}.result-summary small{font-size:12px;margin-top:6px}
+.notify-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.notify-channel{margin:0}.notify-channel .panel-head{display:flex;align-items:center;justify-content:space-between}.channel-state{font-size:12px;font-weight:600;color:var(--ink-3);padding:4px 8px;background:#F3F5F7;border-radius:999px}.channel-state.configured{background:#EAF8F0;color:#138A4B}
+
+/* ===== 代码块 ===== */
+.code-block{background:#161823;color:#D6D9E0;border-radius:10px;padding:14px 16px;font-family:var(--mono);font-size:12px;line-height:1.7;overflow-x:auto;max-height:340px;overflow-y:auto;white-space:pre-wrap;word-break:break-all}
+.code-block .cm{color:#6E7280}
+
+/* ===== 页脚 ===== */
+.foot-note{margin-top:34px;font-size:13px;color:var(--ink-3);border-top:1px solid var(--line);padding-top:20px;display:flex;gap:22px;flex-wrap:wrap}
+.foot-note span{display:inline-flex;align-items:center;gap:6px}
+.foot-note svg{width:13px;height:13px;stroke:currentColor}
+
+/* ===== 空态 ===== */
+.empty{padding:34px 0;text-align:center;color:var(--ink-3);font-size:13px}
+.loading{padding:40px 0;text-align:center;color:var(--ink-3);font-size:13px}
+.loading .spin{display:inline-block;width:18px;height:18px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:rot .8s linear infinite;vertical-align:-4px;margin-right:8px}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+/* ===== 账号切换条 ===== */
+.acct-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:rgba(255,255,255,.82);backdrop-filter:saturate(180%) blur(20px);border:1px solid var(--line);border-radius:var(--radius);padding:14px 20px;margin-bottom:38px}
+.acct-bar .ic{width:16px;height:16px;stroke:var(--accent);flex:none}
+.acct-bar .lbl{font-size:15px;color:var(--ink-2);white-space:nowrap}
+.acct-bar select{width:auto;min-width:180px;font-weight:600}
+.acct-bar .hint{font-size:14px;color:var(--ink-3);margin:0}
+.technical-details{border-top:1px solid var(--line);margin-top:18px;padding-top:16px;color:var(--ink-2);font-size:14px}
+.technical-details summary{cursor:pointer;font-weight:600;color:var(--ink-2);list-style-position:inside}
+.technical-details[open] summary{margin-bottom:12px}
+.technical-details .code-block{margin-top:10px}
+.result-summary{font-size:17px;font-weight:600;line-height:1.5}
+.result-summary small{display:block;color:var(--ink-3);font-size:14px;font-weight:400;margin-top:8px}
+/* ===== 表情选择器 ===== */
+.sticker-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px}
+.sticker-tab{font-size:12px;font-weight:600;padding:4px 12px;border-radius:16px;background:#F0F1F4;color:var(--ink-2);cursor:pointer;border:0}
+.sticker-tab.sel{background:var(--accent);color:#fff}
+.sticker-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:8px;max-height:240px;overflow:auto;padding:4px}
+.sticker-cell{border:1px solid var(--line);border-radius:10px;padding:5px 3px;text-align:center;cursor:pointer;background:#fff}
+.sticker-cell.sel{border-color:var(--accent);background:#fff2f4}
+.sticker-cell img{width:34px;height:34px;object-fit:contain;display:block;margin:0 auto 3px}
+.sticker-cell span{font-size:10.5px;color:var(--ink-2);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.msg-sticker{width:20px;height:20px;object-fit:contain;vertical-align:-4px;margin-right:4px;border-radius:4px}
+
+/* ===== 响应式 ===== */
+@media(max-width:1020px){
+  .cards{grid-template-columns:repeat(2,1fr)}
+  .account-grid,.automation-status-grid,.log-layout,.notify-grid{grid-template-columns:1fr}
+}
+@media(max-width:760px){
+  .app{flex-direction:column}
+  .sidebar{width:100%;height:auto;position:static;display:block;overflow:hidden;border-right:0;border-bottom:1px solid var(--line)}
+  .brand{padding:12px 16px 4px}
+  .nav{display:flex;flex-direction:row;gap:4px;padding:8px 12px 12px;overflow-x:auto;scrollbar-width:none}
+  .nav::-webkit-scrollbar{display:none}
+  .nav-label{display:none}
+  .nav-item{width:auto;flex:none;white-space:nowrap;font-size:12.5px;padding:8px 12px}
+  .nav-item svg{display:none}
+  .sidebar-foot{display:none}
+  .main{padding:20px 16px 44px;width:100%}
+  .cards{grid-template-columns:1fr 1fr;gap:10px}
+  .form-grid{grid-template-columns:1fr}
+  .page-head{flex-direction:column;margin-bottom:28px}
+  .page-title,#view-friends .page-title{font-size:30px;letter-spacing:-.5px}
+  .page-desc{font-size:16px;margin-top:10px}
+  .acct-bar{margin-bottom:22px}
+  .acct-bar select{flex:1;min-width:0}
+  .acct-bar .hint,#ver-badge{display:none}
+  #dash-recent,#friend-table,#log-table{overflow-x:auto}
+  .friend-table{min-width:720px}
+  input,textarea{font-size:16px}
+}
+@media(max-width:480px){
+  .nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:8px 12px 12px;overflow:visible}
+  .nav-item{justify-content:center;text-align:center;white-space:normal;font-size:12px;padding:8px 4px}
+  .nav-item.active::after{display:none}
+  .cards{grid-template-columns:1fr}
+  .page-title,#view-friends .page-title{font-size:28px}
+  .card{min-height:0;padding:17px 20px}
+  .card .v{font-size:21px}
+  .head-actions{width:100%}
+  .head-actions .btn{flex:1}
+  .account-card .ops{align-items:flex-start;flex-wrap:wrap}
+  .account-card .ops>span:last-child{width:100%;justify-content:flex-start}
+  .panel-head,.panel-body{padding:16px}
+  th,td{padding:10px 8px}
+  .foot-note{font-size:11px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-logo"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 13.5H11L9.5 22 19 10.5h-6.5L13 2z"/></svg></div>
+      <div>
+        <div class="brand-name">自动续火花</div>
+        <div class="brand-sub">抖音消息 · 本地控制台</div>
+      </div>
+    </div>
+    <nav class="nav" id="nav">
+      <div class="nav-label">管理</div>
+      <button class="nav-item" data-view="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>总览</button>
+      <button class="nav-item" data-view="accounts"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.5 3.6-5.5 7-5.5s6.2 2 7 5.5"/></svg>账号管理</button>
+      <button class="nav-item" data-view="friends"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11a4 4 0 100-8 4 4 0 000 8z"/><path d="M2 21c.6-4 3.8-6 7-6s6.4 2 7 6"/><path d="M17 8a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/><path d="M19 12.5c2 .7 3.4 2.6 3.9 5"/></svg>续火花好友</button>
+      <button class="nav-item" data-view="messages"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 01-9 8.4 8.9 8.9 0 01-3.8-.8L3 20.5l1.4-5A8.4 8.4 0 113 11.5a8.4 8.4 0 0118 0z"/><path d="M8.5 10.5h7M8.5 13.5h4.5"/></svg>发送内容</button>
+      <div class="nav-label">自动化</div>
+      <button class="nav-item" data-view="schedule"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>定时计划</button>
+      <button class="nav-item" data-view="logs"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>运行记录</button>
+      <button class="nav-item" data-view="notify"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 1112 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.5 21a2 2 0 003 0"/></svg>通知设置</button>
+    </nav>
+    <div class="sidebar-foot"><span class="dot" id="server-dot"></span><span id="server-status">连接中…</span></div>
+  </aside>
+
+  <main class="main">
+    <div class="acct-bar" id="acct-bar">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.5 3.6-5.5 7-5.5s6.2 2 7 5.5"/></svg>
+      <span class="lbl">当前账号</span>
+      <select class="input" id="cur-account"><option value="">加载中…</option></select>
+      <span class="hint" id="cur-account-desc"></span>
+      <span id="ver-badge" style="font-size:11px;color:var(--ink-3);border:1px solid var(--line);border-radius:999px;padding:2px 8px"></span>
+    </div>
+    <!-- ===== 视图：总览 ===== -->
+    <section id="view-dashboard" class="view" style="display:none">
+      <div class="page-head">
+        <div>
+          <div class="page-title">总览</div>
+          <div class="page-desc" id="dash-desc">当前账号与续火花任务的运行状态一览。</div>
+        </div>
+        <div class="head-actions">
+          <button class="btn btn-ghost" id="btn-dryrun"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>试运行（不发送）</button>
+          <button class="btn btn-primary btn-send" id="btn-runnow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9V3z"/></svg>立即发送</button>
+        </div>
+      </div>
+      <div id="dash-banner"></div>
+      <div class="cards" id="dash-cards"></div>
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">最近发送记录</div>
+            <div class="panel-sub">实时同步全局、单独与定时发送结果；送达请在抖音客户端核对</div>
+          </div>
+          <button class="text-btn" data-goto="logs">查看全部</button>
+        </div>
+        <div class="panel-body" id="dash-recent" style="padding:0"></div>
+      </div>
+    </section>
+
+    <!-- ===== 视图：账号管理 ===== -->
+    <section id="view-accounts" class="view" style="display:none">
+      <div class="page-head">
+        <div>
+          <div class="page-title">账号管理</div>
+          <div class="page-desc">每个账号独立保存登录状态和发送设置。凭证保存后，请用无发送试运行确认登录有效。</div>
+        </div>
+        <div class="head-actions"><button class="btn btn-primary" id="btn-add-account">+ 添加账号</button></div>
+      </div>
+      <div id="acc-banner"></div>
+      <div class="account-grid" id="account-list"></div>
+    </section>
+
+    <!-- ===== 视图：续火花好友 ===== -->
+    <section id="view-friends" class="view" style="display:none">
+      <div class="page-head">
+        <div class="page-title">续火花好友</div>
+        <div class="head-actions"><button class="btn btn-primary" id="btn-add-friend">+ 添加好友</button></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">好友名单 <span id="friend-count"></span></div>
+        </div>
+        <div class="panel-body" id="friend-table" style="padding:0"></div>
+      </div>
+    </section>
+
+    <!-- ===== 视图：发送内容 ===== -->
+    <section id="view-messages" class="view" style="display:none">
+      <div class="page-head">
+        <div>
+          <div class="page-title">发送内容</div>
+        </div>
+        <div class="head-actions messages-save-actions"><span class="save-state" id="messages-save-state">已保存</span><button class="btn btn-primary" id="btn-save-messages">保存发送内容</button></div>
+      </div>
+      <div class="content-workspace">
+        <div class="template-head">
+          <div>
+            <div class="template-kicker">全局默认</div>
+            <div class="template-title">默认模板</div>
+            <div class="template-count" id="global-msg-desc"></div>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="btn-add-global">+ 添加消息</button>
+        </div>
+        <div class="template-list"><div class="msg-list" id="global-msg-list"></div></div>
+      </div>
+      <div class="override-section">
+        <div class="override-head">
+          <div>
+            <div class="override-title">好友例外</div>
+          </div>
+        </div>
+        <div class="override-list" id="friend-msg-table"></div>
+      </div>
+    </section>
+
+    <!-- ===== 视图：定时计划 ===== -->
+    <section id="view-schedule" class="view" style="display:none">
+      <div class="page-head">
+        <div>
+          <div class="page-title">定时计划</div>
+        </div>
+        <div class="head-actions"><button class="btn btn-primary" id="btn-save-schedule">保存计划</button></div>
+      </div>
+      <div id="sched-banner"></div>
+      <div class="automation-status-grid" id="sched-grid"></div>
+      <div class="panel automation-panel"><div class="panel-head"><div class="panel-title">好友发送时间</div></div><div class="panel-body" id="sched-slots"></div></div>
+      <div class="panel automation-panel">
+        <div class="panel-head"><div class="panel-title">发送规则</div></div>
+        <div class="panel-body">
+          <div class="field"><label>全局定时</label><div class="automation-switch"><label class="switch"><input type="checkbox" id="inp-global-schedule"><span class="track"></span><span class="thumb"></span></label><span id="global-schedule-state"></span></div></div>
+          <div class="automation-field-grid">
+            <div class="field">
+              <label>全局发送时间</label>
+              <div class="time-row">
+                <input type="time" class="input" id="inp-time" style="width:150px;font-size:15px;font-weight:700">
+              </div>
+            </div>
+            <div class="field">
+              <label>防重复</label>
+              <div class="automation-switch"><label class="switch"><input type="checkbox" id="inp-prevent"><span class="track"></span><span class="thumb"></span></label><span>当天不重复发送同一消息</span></div>
+            </div>
+          </div>
+          <div class="automation-field-grid">
+            <div class="field"><label>发送间隔下限（秒）</label><input type="number" class="input" id="inp-min" min="0" step="1"></div>
+            <div class="field"><label>发送间隔上限（秒）</label><input type="number" class="input" id="inp-max" min="0" step="1"></div>
+          </div>
+        </div>
+      </div>
+      <details class="technical-details" id="sched-technical"><summary>计划任务详情</summary><div class="code-block" id="sched-tech-content"></div></details>
+    </section>
+
+    <!-- ===== 视图：运行记录 ===== -->
+    <section id="view-logs" class="view" style="display:none">
+      <div class="page-head">
+        <div>
+          <div class="page-title">运行记录</div>
+        </div>
+        <div class="head-actions"><button class="btn btn-ghost" id="btn-refresh-logs"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-3-6.7M21 3v6h-6"/></svg>刷新</button></div>
+      </div>
+      <div class="log-layout">
+        <div class="panel automation-panel log-result">
+          <div class="panel-head"><div class="panel-title">最近一次运行</div></div>
+          <div class="panel-body"><div class="result-summary" id="result-summary"></div><details class="technical-details"><summary>原始结果</summary><div class="code-block" id="result-block"></div></details></div>
+        </div>
+        <div class="panel automation-panel log-history">
+          <div class="panel-head"><div class="panel-title">发送历史</div><span class="log-count" id="log-count"></span></div>
+          <div class="panel-body" id="log-table" style="padding:0"></div>
+        </div>
+      </div>
+      <details class="technical-details log-details"><summary>运行日志</summary><div class="code-block" id="log-tail"></div></details>
+    </section>
+
+    <!-- ===== 视图：通知设置 ===== -->
+    <section id="view-notify" class="view" style="display:none">
+      <div class="page-head">
+        <div>
+          <div class="page-title">通知设置</div>
+        </div>
+        <div class="head-actions"><button class="btn btn-primary" id="btn-save-notify">保存通知配置</button></div>
+      </div>
+      <div class="notify-grid">
+      <div class="panel automation-panel notify-channel">
+        <div class="panel-head"><div class="panel-title">钉钉机器人</div><span class="channel-state" id="ding-status"></span></div>
+        <div class="panel-body">
+          <div class="field"><label>Webhook 地址</label><input class="input" id="inp-ding-webhook" placeholder="https://oapi.dingtalk.com/robot/send?access_token=..."></div>
+          <div class="field" style="margin-bottom:0"><label>加签 Secret</label><input class="input" type="password" id="inp-ding-secret" placeholder="SEC..."></div>
+        </div>
+      </div>
+      <div class="panel automation-panel notify-channel">
+        <div class="panel-head"><div class="panel-title">通用 Webhook</div><span class="channel-state" id="webhook-status"></span></div>
+        <div class="panel-body">
+          <div class="field"><label>Webhook URL</label><input class="input" id="inp-webhook-url" placeholder="https://example.com/webhook"></div>
+          <div class="field"><label>自定义请求头（JSON，可选）</label><input class="input" id="inp-webhook-headers" placeholder='{"Authorization": "Bearer token"}'></div>
+          <div class="field" style="margin-bottom:0"><label>自定义 JSON 模板（可选）</label><textarea class="input" rows="2" id="inp-webhook-template" placeholder='{"text": "任务 {task_id} 完成", "status": "{status}"}'></textarea></div>
+        </div>
+      </div>
+      </div>
+    </section>
+
+    <div class="foot-note">
+      <span><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg><span id="foot-sched">定时任务加载中…</span></span>
+      <span><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>凭证与本机配置不外传</span>
+      <span id="foot-mode"></span>
+    </div>
+  </main>
+</div>
+
+<!-- 弹窗 -->
+<div class="modal-mask" id="modal-mask">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modal-title"></div>
+      <button class="modal-close" id="modal-close"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-foot" id="modal-foot"></div>
+  </div>
+</div>
+<div id="toast-zone"></div>
+
+<script>
+/* =====================================================
+ * 自动续火花 · 管理控制台（正式版初版）
+ * 数据全部来自本地服务 /api/*，写操作真实作用于项目文件
+ * ===================================================== */
+var VIEWS = ['dashboard','accounts','friends','messages','schedule','logs','notify'];
+var state = null;          // bootstrap 数据
+var model = null;          // 可编辑模型（targets/globalMessages/interval/prevent）
+var activeRun = null;      // 运行任务轮询
+var curId = null;          // 当前操作账号 id（default / accountN），null=单账号
+var STICKER_CATS = [];     // 表情目录（/api/stickers 拉取缓存）
+var STICKER_MAP = {};      // 表情名 -> 缩略图路径
+var curView = 'dashboard'; // 当前视图（切换账号后重渲染）
+var loadSeq = 0;           // 请求序号：防止切换账号时旧响应覆盖新数据
+
+/* ---------- API 封装 ---------- */
+function api(method, path, body){
+  var opts = {method: method, headers: {'Content-Type': 'application/json'}};
+  if(body !== undefined && body !== null){ opts.body = JSON.stringify(body); }
+  return fetch(path, opts).then(function(r){
+    return r.json().catch(function(){ return {}; }).then(function(j){
+      if(!r.ok){ var e = new Error(j.error || ('请求失败 ' + r.status)); e.status = r.status; throw e; }
+      return j;
+    });
+  });
+}
+
+/* ---------- Toast ---------- */
+function toast(msg, isErr){
+  var zone = document.getElementById('toast-zone');
+  var t = document.createElement('div');
+  t.className = 'toast' + (isErr ? ' err' : '');
+  t.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span></span>';
+  t.querySelector('span').textContent = msg;
+  zone.appendChild(t);
+  setTimeout(function(){ t.classList.add('out'); }, 3200);
+  setTimeout(function(){ t.remove(); }, 3600);
+}
+
+/* ---------- 路由 ---------- */
+function goView(v){
+  if(VIEWS.indexOf(v) === -1) v = 'dashboard';
+  curView = v;
+  document.querySelector('.main').classList.toggle('warm-workspace', ['dashboard','schedule','logs','notify'].indexOf(v) !== -1);
+  VIEWS.forEach(function(x){
+    var el = document.getElementById('view-' + x);
+    if(el) el.style.display = (x === v) ? 'block' : 'none';
+  });
+  document.querySelectorAll('.nav-item').forEach(function(n){
+    n.classList.toggle('active', n.dataset.view === v);
+    if(n.dataset.view === v && window.innerWidth <= 760) n.scrollIntoView({block:'nearest', inline:'center'});
+  });
+  if(v === 'dashboard') renderDashboard();
+  if(v === 'accounts') renderAccounts();
+  if(v === 'friends') renderFriends();
+  if(v === 'messages') renderMessages();
+  if(v === 'schedule') renderSchedule();
+  if(v === 'logs') renderLogs();
+  if(v === 'notify') renderNotify();
+  location.hash = v;
+}
+document.querySelectorAll('.nav-item').forEach(function(n){
+  n.addEventListener('click', function(){ goView(n.dataset.view); });
+});
+document.querySelectorAll('[data-goto]').forEach(function(el){
+  el.addEventListener('click', function(){ goView(el.dataset.goto); });
+});
+window.addEventListener('hashchange', function(){
+  var h = location.hash.replace('#','');
+  goView(VIEWS.indexOf(h) > -1 ? h : 'dashboard');
+});
+
+/* ---------- 弹窗 ---------- */
+function openModal(title, bodyHTML, footHTML){
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = bodyHTML;
+  document.getElementById('modal-foot').innerHTML = footHTML || '';
+  document.getElementById('modal-mask').classList.add('open');
+}
+function closeModal(){
+  document.getElementById('modal-mask').classList.remove('open');
+}
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('modal-mask').addEventListener('click', function(e){
+  if(e.target === this) closeModal();
+});
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape') closeModal();
+});
+
+/* ---------- 工具 ---------- */
+function esc(s){
+  return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function nextRunMarkup(value){
+  var text = String(value || '').trim();
+  var parts = text.match(/^(\d{4}[/-]\d{1,2}[/-]\d{1,2})\s+(\d{1,2}:\d{2})(?::\d{2})?$/);
+  if(!parts) return esc(text || '—');
+  return '<span class="next-run-time">' + esc(parts[2]) + '</span><span class="next-run-date">' + esc(parts[1]) + '</span>';
+}
+function msgTypeTag(m){
+  var map = {'text':'文字','random':'随机','douyin_sticker':'表情','sticker':'表情','image':'图片'};
+  var cls = {'text':'tt-text','random':'tt-random','douyin_sticker':'tt-sticker','sticker':'tt-sticker','image':'tt-image'};
+  var type = m.type || 'text';
+  return '<span class="type-tag ' + (cls[type] || 'tt-text') + '">' + (map[type] || type) + '</span>';
+}
+function msgPreview(m){
+  if(m.type === 'text') return esc(m.content || m.value || '');
+  if(m.type === 'image') return esc(m.path || '');
+  if(m.type === 'douyin_sticker' || m.type === 'sticker'){
+    var nm = m.sticker || m.content || '';
+    var img = STICKER_MAP[nm];
+    return (img ? '<img class="msg-sticker" src="' + esc(img) + '" alt="">' : '') + esc(nm);
+  }
+  if(m.type === 'random'){
+    var n = (m.choices || []).length;
+    return '每日任选 1 条（共 ' + n + ' 条）';
+  }
+  return '';
+}
+function statusPill(status){
+  var map = {success:['pill-ok','程序成功'], failed:['pill-bad','失败'], skipped:['pill-gray','已跳过'], duplicate:['pill-gray','防重复跳过'], unknown:['pill-warn','待核对'], pending:['pill-warn','运行中']};
+  var p = map[status] || ['pill-gray', status || '—'];
+  return '<span class="pill ' + p[0] + '"><span class="pd"></span>' + esc(p[1]) + '</span>';
+}
+function curAccount(){
+  if(!state || !state.accounts) return null;
+  var accs = state.accounts.accounts || [];
+  for(var i = 0; i < accs.length; i++){ if(accs[i].id === curId) return accs[i]; }
+  return accs[0] || null;
+}
+function curAccountName(){
+  var a = curAccount();
+  return a ? (a.label || a.id) : (curId || '默认账号');
+}
+function updateRunButtons(){
+  if(!state) return;
+  var account = curAccount();
+  var unavailable = !!state.run_lock || !!(account && !account.enabled) || !!activeRun;
+  document.getElementById('btn-dryrun').disabled = unavailable;
+  document.getElementById('btn-runnow').disabled = unavailable || !state.validation || state.validation.status !== 'passed';
+  document.querySelectorAll('[data-act="send"]').forEach(function(button){
+    var reason = unavailable ? '账号停用或已有任务运行，请等待完成'
+      : !state.config.friend_send ? '请更新并重启本地服务'
+      : !state.validation || state.validation.status !== 'passed' ? '请先在总览完成试运行（不发送）' : '';
+    button.disabled = !!reason;
+    button.title = reason || '发送这位好友已保存的内容';
+  });
+}
+function sameMsgs(a, b){
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+function isCustomContent(target){
+  return target.content_mode === 'custom';
+}
+function markMessagesDirty(){
+  var el = document.getElementById('messages-save-state');
+  if(el) el.textContent = '有未保存的内容变更';
+}
+function msgCountOf(msgs){
+  return (msgs || []).length;
+}
+
+/* ---------- 数据加载 ---------- */
+function loadAll(){
+  var seq = ++loadSeq;
+  var q = curId ? ('?account=' + encodeURIComponent(curId)) : '';
+  return api('GET', '/api/bootstrap' + q).then(function(j){
+    if(seq !== loadSeq) return;   // 已被更新的请求取代，丢弃过期响应
+    state = j;
+    if(j.account_id) curId = j.account_id;
+    model = {
+      targets: JSON.parse(JSON.stringify(j.config.targets || [])),
+      globalMessages: JSON.parse(JSON.stringify(j.config.global_messages || [])),
+      sendInterval: {min: j.config.send_interval.min, max: j.config.send_interval.max},
+      preventDuplicates: j.config.prevent_duplicates,
+      stickers: j.config.stickers || {},
+      scheduleMode: j.config.schedule_mode || 'legacy'
+    };
+    var messageSaveState = document.getElementById('messages-save-state');
+    if(messageSaveState) messageSaveState.textContent = '已保存';
+    var dot = document.getElementById('server-dot');
+    dot.style.background = '#16A34A';
+    document.getElementById('server-status').textContent = '本地服务运行中';
+    document.getElementById('foot-mode').textContent = '模式：' + (j.accounts.mode === 'multi' ? '多账号' : '单账号');
+    renderAcctBar();
+    loadStickers();
+    refreshRunLock();
+    goView(curView);
+  });
+}
+function renderAcctBar(){
+  var sel = document.getElementById('cur-account');
+  var desc = document.getElementById('cur-account-desc');
+  var vb = document.getElementById('ver-badge');
+  if(vb) vb.textContent = state && state.version ? ('版本 ' + state.version) : '';
+  var fs = document.getElementById('foot-sched');
+  if(fs && state && state.overview && state.overview.schedule){
+    var sc = state.overview.schedule;
+    fs.textContent = sc.mode === 'windows'
+      ? '每天 ' + sc.trigger_time + ' 自动运行'
+      : '当前账号定时未生效';
+  }
+  if(!sel || !desc) return;
+  var accs = (state.accounts && state.accounts.accounts) || [];
+  if(!state.accounts || state.accounts.mode === 'single' || accs.length <= 1){
+    sel.innerHTML = '<option value="">单账号模式</option>';
+    sel.disabled = true;
+    desc.textContent = '单账号模式，无需切换';
+    return;
+  }
+  sel.disabled = false;
+  if(!accs.some(function(a){ return a.id === curId; })){
+    curId = accs[0].id;
+    loadAll();
+    return;
+  }
+  sel.innerHTML = accs.map(function(a){
+    return '<option value="' + esc(a.id) + '"' + (a.id === curId ? ' selected' : '') + '>' +
+      esc(a.label) + '</option>';
+  }).join('');
+  var cur = accs.filter(function(a){ return a.id === curId; })[0];
+  desc.textContent = cur ? (cur.enabled ? '已启用' : '已停用') : '';
+}
+document.getElementById('cur-account').addEventListener('change', function(){
+  curId = this.value || null;
+  var v = location.hash.replace('#','');
+  if(VIEWS.indexOf(v) > -1) curView = v;
+  loadAll().then(function(){
+    toast('已切换到账号：' + (curId || '默认账号'));
+  }).catch(function(e){ toast('切换失败：' + e.message, true); });
+});
+function loadStickers(){
+  if(STICKER_CATS.length) return;
+  api('GET', '/api/stickers').then(function(j){
+    STICKER_CATS = (j.categories || []).map(function(c){
+      return {key: c.key, tab_index: c.tab_index, items: (c.items || []).map(function(it){
+        return {name: it.name, img: it.img};
+      })};
+    });
+    STICKER_MAP = {};
+    STICKER_CATS.forEach(function(c){ c.items.forEach(function(it){ STICKER_MAP[it.name] = it.img; }); });
+    if(curView === 'messages') renderMessages();
+    if(curView === 'friends') renderFriends();
+  }).catch(function(){});
+}
+
+/* ---------- 总览 ---------- */
+function renderDashboard(){
+  if(!state) return;
+  var ov = state.overview;
+  var dd = document.getElementById('dash-desc');
+  if(dd) dd.innerHTML = '<b>' + esc(curAccountName()) + '</b> 的账号状态、发送计划和最近运行结果。';
+  var acc = curAccount();
+  var icons = {
+    account:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.5 3.6-5.5 7-5.5s6.2 2 7 5.5"/></svg>',
+    friends:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M9 11a4 4 0 100-8 4 4 0 000 8z"/><path d="M2 21c.6-4 3.8-6 7-6s6.4 2 7 6"/><path d="M17 8a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/></svg>',
+    schedule:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></svg>',
+    record:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M6 12l3.5 3.5L18 7"/></svg>'
+  };
+  var cards = [
+    {kind:'account', k:'当前账号', v: esc(curAccountName()), s: acc && acc.enabled ? '已启用' : '已停用'},
+    {kind:'friends', k:'续火花好友', v: esc(String(ov.friend_count)), s: '已加入每日发送名单'},
+    {kind:'schedule', k:'下次运行', v: nextRunMarkup(ov.next_run), s: ov.trigger_time ? ('每天 ' + ov.trigger_time + ' 定时') : '计划任务查询中'},
+    {kind:'record', k:'今日程序记录', v: esc(ov.today_status), s: esc(ov.last_sent || '今日暂无发送记录')}
+  ];
+  document.getElementById('dash-cards').innerHTML = cards.map(function(c){
+    return '<div class="card dashboard-card card-' + c.kind + '"><div class="k"><span>' + c.k + '</span><span class="dash-icon">' + icons[c.kind] + '</span></div><div class="v">' + c.v + '</div><div class="s">' + esc(c.s) + '</div></div>';
+  }).join('');
+  var banner = '';
+  if(state.run_lock){
+    banner = '<div class="banner banner-warn"><div>当前有任务正在运行，请等待结束后再试。</div></div>';
+  }
+  var validation = state.validation || {};
+  if(acc && !acc.enabled){
+    banner += '<div class="banner banner-info">当前账号已停用，请核对计划任务状态；重新启用后再做无发送试运行。</div>';
+  } else {
+    banner += validation.status === 'passed'
+      ? '<div class="dash-readiness"><div class="dash-readiness-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4.2 4.2L19 6.5"/></svg></div><div class="dash-readiness-main"><span class="dash-readiness-title">无发送试运行已通过</span><span class="dash-readiness-meta">' + esc((validation.validated_at || '').replace('T', ' ').slice(0, 19)) + '</span></div><div class="dash-readiness-note">已验证登录与好友定位 · 送达请在抖音核对</div></div>'
+      : '<div class="banner dashboard-validation-note">当前设置还未通过验证。请先点「试运行（不发送）」；通过前无法正式发送。</div>';
+    if(model.preventDuplicates && ov.today_status === '已发送'){
+      banner += '<div class="banner banner-info">今天已有程序发送记录。再次点击「立即发送」时，相同消息会被防重复规则跳过。</div>';
+    }
+  }
+  document.getElementById('dash-banner').innerHTML = banner;
+  updateRunButtons();
+  renderRecentTable('dash-recent', state.logs.runs, state.logs.entries);
+}
+function scopeLabel(scope){
+  var map = {global:'全局发送', friend:'单独发送', scheduled:'定时发送', legacy:'历史消息'};
+  return map[scope] || '程序记录';
+}
+function renderRecentTable(id, runs, entries){
+  var el = document.getElementById(id);
+  var records = Array.isArray(runs) ? runs : [];
+  if(!records.length && Array.isArray(entries)){
+    records = entries.map(function(entry){
+      return {finished_at: entry.finished_at || entry.started_at, scope:'legacy', target:entry.target, status:entry.status, sent:0};
+    });
+  }
+  if(!records.length){
+    el.innerHTML = '<div class="empty">暂无发送记录。试运行不会产生发送记录。</div>';
+    return;
+  }
+  var rows = records.slice(0, 5).map(function(e){
+    var time = (e.finished_at || e.started_at || '');
+    var t = time ? time.replace('T', ' ').slice(0, 16) : (e.date || '—');
+    var scope = e.scope || 'legacy';
+    var detail = e.sent ? ('发送 ' + e.sent + ' 条') : (e.status === 'duplicate' ? '防重复跳过' : '未新增发送');
+    return '<tr><td><span class="name">' + esc(t) + '</span></td><td><span class="activity-scope ' + esc(scope) + '">' + esc(scopeLabel(scope)) + '</span></td><td>' + esc(e.target || '好友') + '</td><td>' + statusPill(e.status) + '<div class="sub">' + esc(detail) + '</div></td></tr>';
+  }).join('');
+  el.innerHTML = '<table><colgroup><col style="width:26%"><col style="width:21%"><col style="width:27%"><col style="width:26%"></colgroup><thead><tr><th>时间</th><th>发送方式</th><th>对象</th><th>结果</th></tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
+/* ---------- 账号管理 ---------- */
+function renderAccounts(){
+  if(!state) return;
+  var acc = state.accounts;
+  var el = document.getElementById('account-list');
+  var banner = document.getElementById('acc-banner');
+  banner.innerHTML = '';
+  el.innerHTML = acc.accounts.map(function(a){
+    var avatar = (a.label || a.id || '?').slice(0, 1);
+    var avatarNode = a.avatar_url ? '<img src="' + esc(a.avatar_url) + '" alt="' + esc(a.label || a.id) + ' 的抖音头像">' : esc(avatar);
+    var toggle = '';
+    var actions = '';
+    if(acc.mode === 'multi'){
+      toggle = '<span class="account-switch">启用账号<label class="switch"><input type="checkbox" data-act="toggle" data-id="' + esc(a.id) + '"' + (a.enabled ? ' checked' : '') + '><span class="track"></span><span class="thumb"></span></label></span>';
+      if(!a.is_default){
+        actions += '<button class="text-btn" data-act="default" data-id="' + esc(a.id) + '">设为默认</button>';
+      }
+      actions += '<button class="text-btn" data-act="relogin" data-id="' + esc(a.id) + '">重新登录</button>';
+      actions += '<button class="text-btn danger" data-act="del" data-id="' + esc(a.id) + '">删除</button>';
+    } else {
+      actions += '<button class="btn btn-primary btn-sm" data-act="relogin">重新登录</button>';
+    }
+    var def = a.is_default ? '<span class="tag-default">默认账号</span>' : '';
+    var mtime = a.storage_mtime ? ('登录信息更新于 ' + esc(a.storage_mtime)) : (a.cookie ? '登录信息已保存' : '尚未登录');
+    var validationState = a.validation_status || (a.id === curId && state.validation && state.validation.status);
+    var loginValue = a.logged_in ? '<span class="value good"><span class="pd"></span>已保存</span>' : '<span class="value pending"><span class="pd"></span>未登录</span>';
+    var runValue = !a.enabled ? '<span class="value muted"><span class="pd"></span>已停用</span>' : validationState === 'passed' ? '<span class="value good"><span class="pd"></span>可发送</span>' : '<span class="value pending"><span class="pd"></span>待验证</span>';
+    return '<div class="account-card"><div class="top"><div class="avatar">' + avatarNode + '</div><div><div class="nick">' + esc(a.label || a.id) + ' ' + def + '</div><div class="account-id">' + esc(a.id) + '</div></div></div>' +
+      '<div class="account-state-grid"><div class="account-state"><div class="label">登录凭证</div>' + loginValue + '</div><div class="account-state"><div class="label">发送状态</div>' + runValue + '</div></div>' +
+      '<div class="meta">' + esc(mtime) + '</div><div class="ops"><span>' + toggle + '</span><span class="account-actions">' + actions + '</span></div></div>';
+  }).join('');
+  // 覆盖式委托：防多次渲染后监听累加导致点击一次触发多次
+  el.onclick = function(e){
+    var btn = e.target.closest('[data-act]');
+    if(!btn) return;
+    var act = btn.dataset.act;
+    var id = btn.dataset.id;
+    if(act === 'relogin') startRelogin(id);
+    if(act === 'toggle') toggleAccount(id, btn.checked);
+    if(act === 'default') setDefaultAccount(id);
+    if(act === 'del') removeAccount(id);
+  };
+}
+function startRelogin(id){
+  var payload = id ? {id: id} : {};
+  api('POST', '/api/accounts/relogin', payload).then(function(j){
+    toast((id ? '已启动账号「' + id + '」重登录' : '已启动重登录') + '：浏览器即将弹出，请在抖音页面完成扫码登录');
+    pollTask(j.id, function(){
+      toast('登录流程已结束，正在刷新账号状态');
+      return loadAll();
+    });
+  }).catch(function(e){ toast(e.message, true); });
+}
+function addAccount(){
+  openModal('添加抖音账号',
+    '<p style="font-size:15px;color:var(--ink-2);line-height:1.6;margin-bottom:16px">新账号默认停用。添加后依次完成扫码登录、好友与内容设置、发送时间设置，再启用账号并运行一次「试运行（不发送）」。验证通过后才可正式发送。</p>' +
+    '<div class="field"><label>备注名（可选）</label><input class="input" id="acc-label" placeholder="例如：小号" maxlength="20"><div class="hint">仅用于界面区分，可留空使用自动名称</div></div>',
+    '<button class="btn btn-ghost" onclick="closeModal()">取消</button><button class="btn btn-primary" id="btn-confirm-add-acc">添加账号</button>');
+  document.getElementById('btn-confirm-add-acc').addEventListener('click', function(){
+    var label = document.getElementById('acc-label').value.trim();
+    api('POST', '/api/accounts', {label: label}).then(function(j){
+      closeModal();
+      state.accounts = j.accounts;
+      var added = j.accounts.accounts[j.accounts.accounts.length - 1];
+      if(added) curId = added.id;
+      toast('已添加账号' + (label ? '「' + label + '」' : '') + '，请先点「重新登录」完成扫码');
+      loadAll().then(renderAccounts);
+    }).catch(function(e){ toast('添加失败：' + e.message, true); });
+  });
+}
+function removeAccount(id){
+  var name = id;
+  openModal('删除账号「' + name + '」？',
+    '<p style="font-size:13px;color:var(--ink-2);line-height:1.7">将移除该账号的<b>账号条目与环境文件</b>（<span class="mono">.env.' + id + '</span>），之后不再参与发送。该账号的好友/消息任务文件与登录凭证文件<b>会保留</b>，重新添加同名账号即可恢复。<br>若删除的是最后一个账号，将回到单账号模式。</p>',
+    '<button class="btn btn-ghost" onclick="closeModal()">取消</button><button class="btn btn-danger" id="btn-confirm-del-acc">确认删除</button>');
+  document.getElementById('btn-confirm-del-acc').addEventListener('click', function(){
+    closeModal();
+    api('DELETE', '/api/accounts?id=' + encodeURIComponent(id)).then(function(j){
+      state.accounts = j.accounts;
+      toast('已删除账号');
+      loadAll().then(renderAccounts);
+    }).catch(function(e){ toast('删除失败：' + e.message, true); });
+  });
+}
+function toggleAccount(id, enabled){
+  var accounts = state.accounts.accounts.map(function(a){
+    return {id: a.id, enabled: a.id === id ? enabled : a.enabled, label: a.label};
+  });
+  api('PUT', '/api/accounts', {accounts: accounts, default_id: state.accounts.default_id}).then(function(j){
+    state.accounts = j.accounts;
+    toast((enabled ? '已启用账号' : '已停用账号') + '；配置状态请以试运行验证为准');
+    loadAll().then(renderAccounts);
+  }).catch(function(e){ toast(e.message, true); renderAccounts(); });
+}
+function setDefaultAccount(id){
+  var accounts = state.accounts.accounts.map(function(a){
+    return {id: a.id, enabled: a.enabled, label: a.label};
+  });
+  api('PUT', '/api/accounts', {accounts: accounts, default_id: id}).then(function(j){
+    state.accounts = j.accounts;
+    toast('已设为默认账号');
+    loadAll().then(renderAccounts);
+  }).catch(function(e){ toast(e.message, true); });
+}
+
+/* ---------- 好友管理 ---------- */
+var friendExpanded = {};
+function friendDetailMessage(message){
+  var body = msgPreview(message) || '（未填写）';
+  if(message.type !== 'random') return '<div class="friend-detail-item">' + msgTypeTag(message) + '<div class="content">' + body + '</div></div>';
+  var choices = (message.choices || []).map(function(choice){
+    return '<div class="friend-random-choice">' + msgTypeTag(choice) + '<span>' + (msgPreview(choice) || '（未填写）') + '</span></div>';
+  }).join('') || '<div class="friend-random-choice">暂无候选内容</div>';
+  return '<div class="friend-detail-item">' + msgTypeTag(message) + '<div class="content">每日随机任选 1 条<div class="friend-random-choices">' + choices + '</div></div></div>';
+}
+function renderFriends(){
+  if(!state) return;
+  document.getElementById('friend-count').textContent = '共 ' + model.targets.length + ' 人';
+  var el = document.getElementById('friend-table');
+  if(!model.targets.length){
+    el.innerHTML = '<div class="empty">还没有好友，点右上角「添加好友」开始</div>';
+    return;
+  }
+  var rows = model.targets.map(function(t, i){
+    var custom = isCustomContent(t);
+    var content = custom ? ('自定义 ' + msgCountOf(t.messages) + ' 条') : '沿用全局';
+    var pill = custom ? '<span class="pill pill-red"><span class="pd"></span>' + content + '</span>' : '<span class="pill pill-gray"><span class="pd"></span>' + content + '</span>';
+    var expanded = !!friendExpanded[i];
+    var tone = i % 5;
+    var detail = t.messages.map(friendDetailMessage).join('');
+    var defaultTime = (state.overview.schedule && state.overview.schedule.configured_time) || '';
+    var time = model.scheduleMode === 'friends'
+      ? (t.schedule_enabled === false ? '未启用' : (t.send_time || '未设置'))
+      : (model.scheduleMode === 'global' ? defaultTime : (t.send_time || defaultTime)) || '未设置';
+    var schedule = state.overview.schedule || {};
+    var pending = schedule.mode === 'unsynced' && time !== '未启用';
+    return '<tr class="friend-row' + (expanded ? ' is-expanded' : '') + '"><td class="friend-expand-cell"><button class="friend-expand" data-expand="' + i + '" aria-expanded="' + expanded + '" aria-label="' + (expanded ? '收起' : '展开') + esc(t.name) + '的发送内容和定时计划"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button></td>' +
+      '<td><div class="friend-identity"><span class="friend-color friend-tone-' + tone + '">' + esc((t.name || '?').slice(0, 1)) + '</span><div><div class="name">' + esc(t.name) + '</div>' + (t.douyin_id ? '<div class="friend-mode-note">抖音号：' + esc(t.douyin_id) + '</div>' : '') + '</div></div></td>' +
+      '<td><div class="friend-mode">' + pill + '</div></td>' +
+      '<td><div class="friend-time">' + esc(time === '未设置' || time === '未启用' ? time : '每天 ' + time) + (pending ? '<br><span class="muted">系统计划待同步</span>' : '') + '</div></td>' +
+      '<td><div class="row-actions"><button class="text-btn" data-act="send" data-i="' + i + '">立即发送</button><button class="text-btn" data-act="edit" data-i="' + i + '">编辑</button><button class="text-btn danger" data-act="del" data-i="' + i + '">删除</button></div></td></tr>' +
+      (expanded ? '<tr class="friend-detail"><td colspan="5"><div class="friend-detail-content"><div class="friend-detail-head">发送内容</div><div class="friend-detail-list">' + detail + '</div></div></td></tr>' : '');
+  }).join('');
+  el.innerHTML = '<table class="friend-table"><colgroup><col style="width:4%"><col style="width:24%"><col style="width:27%"><col style="width:21%"><col style="width:24%"></colgroup><thead><tr><th></th><th>昵称 / 备注</th><th>发送内容</th><th>定时计划</th><th style="text-align:right">操作</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  el.querySelectorAll('[data-expand]').forEach(function(button){
+    button.addEventListener('click', function(){ friendExpanded[parseInt(button.dataset.expand, 10)] = !friendExpanded[parseInt(button.dataset.expand, 10)]; renderFriends(); });
+  });
+  el.querySelectorAll('[data-act]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var i = parseInt(b.dataset.i, 10);
+      if(b.dataset.act === 'edit') openFriendModal(i);
+      if(b.dataset.act === 'del') removeFriend(i);
+      if(b.dataset.act === 'send') startFriendRun(i);
+    });
+  });
+  updateRunButtons();
+}
+function startFriendRun(i){
+  if(activeRun || state.run_lock){ toast('已有任务在运行，请等待完成', true); return; }
+  if(!state.config.friend_send || !state.config.task_revision){ toast('当前服务未加载单好友发送功能，请更新并重启服务', true); return; }
+  if(curAccount() && !curAccount().enabled){ toast('当前账号已停用，请先启用账号', true); return; }
+  if(!state.validation || state.validation.status !== 'passed'){ toast('请先在总览完成试运行（不发送）', true); return; }
+  if(!sameMsgs(model.targets, state.config.targets) || !sameMsgs(model.globalMessages, state.config.global_messages)){
+    toast('有未保存的好友或内容变更，请先保存再发送', true); return;
+  }
+  var friend = state.config.targets[i];
+  if(!friend || !friend.messages || !friend.messages.length){ toast('请先为这位好友配置发送内容', true); return; }
+  var accountId = curId || 'default', revision = state.config.task_revision;
+  var preventDuplicates = !!model.preventDuplicates;
+  openModal('立即发送给「' + friend.name + '」',
+    '<p>账号：' + esc(curAccountName()) + '<br>好友：' + esc(friend.name) + (friend.douyin_id ? '<br>抖音号：' + esc(friend.douyin_id) : '') + '</p>' +
+    '<div class="friend-detail-list">' + friend.messages.map(friendDetailMessage).join('') + '</div>' +
+    '<div class="friend-send-duplicate"><div><div class="friend-send-duplicate-title">防重复</div><div class="friend-send-duplicate-note">仅本次手动发送 · 不影响定时计划</div></div><label class="switch" title="开启后跳过当天已处理的相同内容"><input type="checkbox" id="friend-send-prevent"' + (preventDuplicates ? ' checked' : '') + '><span class="track"></span><span class="thumb"></span></label></div>',
+    '<button class="btn btn-ghost" onclick="closeModal()">取消</button><button class="btn btn-primary" id="friend-send-confirm">确认发送</button>');
+  document.getElementById('friend-send-confirm').addEventListener('click', function(){
+    if(activeRun || accountId !== (curId || 'default')){ closeModal(); toast('账号或运行状态已变化，请重新确认', true); return; }
+    preventDuplicates = document.getElementById('friend-send-prevent').checked;
+    activeRun = {status: 'starting'};
+    closeModal(); updateRunButtons();
+    api('POST', '/api/run/friend', {account: accountId, target: friend.name, task_revision: revision, prevent_duplicates: preventDuplicates}).then(function(j){
+      activeRun = j; updateRunButtons();
+      toast('正在向「' + friend.name + '」发送，请等待运行结果');
+      pollRun(j.id, false, accountId, friend.name);
+    }).catch(function(e){ activeRun = null; toast(e.message, true); refreshRunLock(); updateRunButtons(); });
+  });
+}
+function removeFriend(i){
+  var name = model.targets[i].name;
+  openModal('删除好友「' + name + '」？',
+    '<p style="font-size:13px;color:var(--ink-2);line-height:1.7">将从 config.json 中移除该好友，之后定时任务不再向 TA 发送消息。</p>',
+    '<button class="btn btn-ghost" onclick="closeModal()">取消</button><button class="btn btn-danger" id="btn-confirm-del">确认删除</button>');
+  document.getElementById('btn-confirm-del').addEventListener('click', function(){
+    model.targets.splice(i, 1);
+    closeModal();
+    saveConfigModel('已删除好友');
+  });
+}
+var friendDraft = null;   // 编辑消息时暂存好友弹窗表单状态（modal 为单层，重开后恢复）
+function openFriendModal(i){
+  var draft = friendDraft;
+  friendDraft = null;
+  var t = i >= 0 ? model.targets[i] : null;
+  var isNew = !t;
+  var name = draft ? draft.name : (t ? t.name : '');
+  var douyinId = draft ? draft.douyinId : (t ? (t.douyin_id || '') : '');
+  var custom = draft ? draft.mode === 'custom' : (t ? isCustomContent(t) : false);
+  var friendTime = draft ? draft.sendTime : (t ? (t.send_time || '') : '');
+  var scheduleChoice = draft ? draft.timeMode : ((model.scheduleMode === 'friends' || (model.scheduleMode === 'legacy' && t && t.send_time))
+    ? (t && t.schedule_enabled === false ? 'off' : 'custom') : 'global');
+  var defaultTime = (state.overview.schedule && state.overview.schedule.configured_time) || '未设置';
+  var globalLabel = model.scheduleMode === 'friends' ? '开启全局定时（全部好友统一）' : '全局时间（' + esc(defaultTime) + '）';
+  var customLabel = model.scheduleMode === 'friends' ? '好友自定义时间' : '好友自定义时间（关闭全局定时）';
+  var offLabel = model.scheduleMode === 'friends' ? '关闭该好友定时' : '关闭该好友定时（关闭全局定时）';
+  var body = '<div class="field"><label for="f-name">昵称 / 备注</label><input class="input" id="f-name" placeholder="私信中显示的昵称或备注" value="' + esc(name) + '"></div>' +
+    '<div class="field"><label for="f-douyin-id">抖音号</label><input class="input" id="f-douyin-id" autocomplete="off" spellcheck="false" placeholder="好友主页上的抖音号（选填）" value="' + esc(douyinId) + '"></div>' +
+    '<div class="field"><label>发送内容</label><select class="input" id="f-mode"><option value="global">沿用全局内容</option><option value="custom"' + (custom ? ' selected' : '') + '>单独设置内容</option></select></div>' +
+    '<div id="f-custom-wrap" style="display:' + (custom ? 'block' : 'none') + '"><label>消息列表</label><div class="msg-list" id="f-msgs"></div><button class="btn btn-ghost btn-sm" id="f-add-msg">+ 添加消息</button></div>' +
+    '<div class="field" style="margin-top:20px"><label>定时发送</label><select class="input" id="f-time-mode"><option value="global"' + (scheduleChoice === 'global' ? ' selected' : '') + '>' + globalLabel + '</option><option value="custom"' + (scheduleChoice === 'custom' ? ' selected' : '') + '>' + customLabel + '</option><option value="off"' + (scheduleChoice === 'off' ? ' selected' : '') + '>' + offLabel + '</option></select></div>' +
+    '<div class="field" id="f-time-wrap" style="display:' + (scheduleChoice === 'custom' ? 'block' : 'none') + '"><label for="f-time">每天发送时间</label><input class="input" type="time" id="f-time" value="' + esc(friendTime || defaultTime || '17:20') + '"></div>';
+  openModal(isNew ? '添加续火花好友' : '编辑好友「' + name + '」', body,
+    '<button class="btn btn-ghost" onclick="closeModal()">取消</button><button class="btn btn-primary" id="f-save">' + (isNew ? '添加并保存' : '保存') + '</button>');
+  var msgs = draft
+    ? JSON.parse(JSON.stringify(draft.msgs))
+    : (custom ? JSON.parse(JSON.stringify(t.messages)) : JSON.parse(JSON.stringify(model.globalMessages)));
+  var msgEl = document.getElementById('f-msgs');
+  function renderMsgs(){
+    msgEl.innerHTML = msgs.map(function(m, j){
+      var pv = msgPreview(m);
+      return '<div class="msg-item">' + msgTypeTag(m) + '<div class="content" style="cursor:pointer" data-j="' + j + '" data-act="edit">' + (pv || '<span style="color:var(--ink-3);font-size:12px">（未填写，点此编辑）</span>') + '</div>' +
+        '<button class="icon-btn" data-j="' + j + '" data-act="edit" title="编辑内容"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>' +
+        '<button class="icon-btn danger" data-j="' + j + '" data-act="del"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button></div>';
+    }).join('') || '<div class="empty" style="padding:12px 0">暂无消息，点「+ 添加消息」并点消息条目编辑内容</div>';
+    msgEl.querySelectorAll('[data-j]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var jj = parseInt(b.dataset.j, 10);
+        if(b.dataset.act === 'del'){ msgs.splice(jj, 1); renderMsgs(); }
+        else {
+          friendDraft = {
+            name: document.getElementById('f-name').value,
+            douyinId: document.getElementById('f-douyin-id').value,
+            mode: document.getElementById('f-mode').value,
+            timeMode: document.getElementById('f-time-mode').value,
+            sendTime: document.getElementById('f-time-mode').value === 'custom' ? document.getElementById('f-time').value : '',
+            msgs: msgs
+          };
+          openMsgEditor(msgs, jj, function(){ openFriendModal(i); });
+        }
+      });
+    });
+  }
+  renderMsgs();
+  function addMsg(){
+    msgs.push({type: 'text', content: ''});
+    renderMsgs();
+  }
+  document.getElementById('f-add-msg').addEventListener('click', addMsg);
+  document.getElementById('f-mode').addEventListener('change', function(){
+    document.getElementById('f-custom-wrap').style.display = this.value === 'custom' ? 'block' : 'none';
+  });
+  document.getElementById('f-time-mode').addEventListener('change', function(){
+    document.getElementById('f-time-wrap').style.display = this.value === 'custom' ? 'block' : 'none';
+  });
+  document.getElementById('f-save').addEventListener('click', function(){
+    var newName = document.getElementById('f-name').value.trim();
+    var newDouyinId = document.getElementById('f-douyin-id').value.trim();
+    if(!newName){ toast('请填写昵称或备注', true); return; }
+    if(newDouyinId && !/^[A-Za-z0-9_.]+$/.test(newDouyinId)){ toast('抖音号只能填写字母、数字、下划线或点', true); return; }
+    if(newDouyinId && model.targets.some(function(x, k){ return k !== i && (x.douyin_id || '').toLowerCase() === newDouyinId.toLowerCase(); })){
+      toast('这个抖音号已在好友列表中', true); return;
+    }
+    if(model.targets.some(function(x, k){ return x.name === newName && k !== i; })){
+      toast('好友「' + newName + '」已存在', true); return;
+    }
+    var mode = document.getElementById('f-mode').value;
+    var selectedTimeMode = document.getElementById('f-time-mode').value;
+    var sendTime = selectedTimeMode === 'custom' ? document.getElementById('f-time').value : (t ? t.send_time || null : null);
+    if(sendTime !== null && !/^([01]\d|2[0-3]):[0-5]\d$/.test(sendTime)){ toast('请选择有效的好友发送时间', true); return; }
+    var finalMsgs = mode === 'custom' ? msgs.filter(function(m){ return m.content || m.path || m.sticker || (m.choices && m.choices.length); }) : JSON.parse(JSON.stringify(model.globalMessages));
+    if(mode === 'custom' && !finalMsgs.length){ toast('缺少消息内容：请点消息条目或编辑按钮填写内容', true); return; }
+    var before = JSON.parse(JSON.stringify(model.targets));
+    var beforeMode = model.scheduleMode;
+    model.scheduleMode = selectedTimeMode === 'global' ? 'global' : 'friends';
+    if(isNew){
+      model.targets.push({name: newName, douyin_id: newDouyinId || null, messages: finalMsgs, content_mode: mode === 'custom' ? 'custom' : 'global', send_time: sendTime, schedule_enabled: selectedTimeMode !== 'off'});
+    } else {
+      model.targets[i].name = newName;
+      model.targets[i].douyin_id = newDouyinId || null;
+      model.targets[i].messages = finalMsgs;
+      model.targets[i].content_mode = mode === 'custom' ? 'custom' : 'global';
+      model.targets[i].send_time = sendTime;
+      model.targets[i].schedule_enabled = selectedTimeMode !== 'off';
+    }
+    document.getElementById('f-save').disabled = true;
+    saveConfigModel(isNew ? '已添加好友「' + newName + '」' : '已保存好友信息', true).then(function(){
+      closeModal();
+    }).catch(function(e){
+      model.targets = before;
+      model.scheduleMode = beforeMode;
+      document.getElementById('f-save').disabled = false;
+      toast('保存未生效：' + e.message, true);
+    });
+  });
+}
+
+/* ---------- 发送内容 ---------- */
+function renderMessages(){
+  if(!state) return;
+  document.getElementById('global-msg-desc').textContent = msgCountOf(model.globalMessages) + ' 条消息';
+  renderGlobalMsgs();
+  var el = document.getElementById('friend-msg-table');
+  if(!model.targets.length){
+    el.innerHTML = '<div class="empty">暂无好友</div>';
+    return;
+  }
+  var rows = model.targets.map(function(t, i){
+    var custom = isCustomContent(t);
+    var label = custom ? '单独设置' : '继承全局';
+    var detail = custom ? (msgCountOf(t.messages) + ' 条消息') : '使用默认模板';
+    return '<div class="override-row"><div><div class="override-name">' + esc(t.name) + '</div></div>' +
+      '<div><span class="mode-badge ' + (custom ? 'mode-custom' : 'mode-global') + '"><span class="pd"></span>' + label + '</span><div class="override-detail">' + detail + '</div></div>' +
+      '<button class="text-btn override-action" data-i="' + i + '">' + (custom ? '编辑' : '单独设置') + '</button></div>';
+  }).join('');
+  el.innerHTML = rows;
+  el.querySelectorAll('.text-btn').forEach(function(b){
+    b.addEventListener('click', function(){
+      var i = parseInt(b.dataset.i, 10);
+      openCustomMsgModal(i);
+    });
+  });
+}
+function renderGlobalMsgs(){
+  var el = document.getElementById('global-msg-list');
+  var msgs = model.globalMessages;
+  el.innerHTML = msgs.map(function(m, j){
+    return '<div class="msg-item">' + msgTypeTag(m) + '<div class="content">' + msgPreview(m) + '</div>' +
+      '<button class="icon-btn" data-j="' + j + '" data-act="edit"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>' +
+      '<button class="icon-btn danger" data-j="' + j + '" data-act="del"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button></div>';
+  }).join('') || '<div class="empty">暂无全局消息，点「添加消息」</div>';
+  el.querySelectorAll('[data-act]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var j = parseInt(b.dataset.j, 10);
+      if(b.dataset.act === 'del'){
+        model.globalMessages.splice(j, 1);
+        renderMessages(); markMessagesDirty();
+      } else {
+        openMsgEditor(model.globalMessages, j, function(){ renderMessages(); markMessagesDirty(); });
+      }
+    });
+  });
+}
+document.getElementById('btn-add-global').addEventListener('click', function(){
+  openMsgEditor(model.globalMessages, -1, function(){ renderMessages(); markMessagesDirty(); });
+});
+function openMsgEditor(list, j, after){
+  var m = j >= 0 ? list[j] : {type: 'text', content: ''};
+  var body = '<div class="field"><label>消息类型</label><select class="input" id="m-type">' +
+    '<option value="text"' + (m.type === 'text' ? ' selected' : '') + '>文字</option>' +
+    '<option value="random"' + (m.type === 'random' ? ' selected' : '') + '>随机（多条中每日任选一条）</option>' +
+    '<option value="douyin_sticker"' + (m.type === 'douyin_sticker' ? ' selected' : '') + '>抖音表情</option>' +
+    '<option value="image"' + (m.type === 'image' ? ' selected' : '') + '>图片</option></select></div>' +
+    '<div class="field" id="m-main"><label>内容</label><textarea class="input" rows="3" id="m-value">' + esc(m.content || m.value || m.path || m.sticker || '') + '</textarea></div>' +
+    '<div id="m-random-wrap" style="display:none"><label style="font-size:12.5px;font-weight:600">随机候选项</label><div class="msg-list" id="m-choices"></div><button class="btn btn-ghost btn-sm" id="m-add-choice">+ 添加候选项</button></div>' +
+    '<div id="m-sticker-wrap" style="display:none"><label style="font-size:12.5px;font-weight:600">选择抖音表情（'+ 0 +'）</label><div class="sticker-tabs" id="m-sticker-tabs"></div><div class="sticker-grid" id="m-sticker-grid"></div></div>';
+  openModal(j >= 0 ? '编辑消息' : '添加消息', body,
+    '<button class="btn btn-ghost" onclick="closeModal()">取消</button><button class="btn btn-primary" id="m-save">保存</button>');
+  var choices = (m.choices || []).map(function(c){ return JSON.parse(JSON.stringify(c)); });
+  var stickerSel = (m.type === 'douyin_sticker') ? (m.sticker || '') : '';
+  var stickerCat = '';
+  function renderChoices(){
+    document.getElementById('m-choices').innerHTML = choices.map(function(c, k){
+      var type = c.type || 'text'; var value = c.content || c.value || c.path || c.sticker || '';
+      return '<div class="random-choice"><select class="input" data-choice-type="' + k + '"><option value="text"' + (type === 'text' ? ' selected' : '') + '>文字</option><option value="image"' + (type === 'image' ? ' selected' : '') + '>图片</option><option value="douyin_sticker"' + (type === 'douyin_sticker' ? ' selected' : '') + '>表情</option></select><input class="input" data-choice-value="' + k + '" value="' + esc(value) + '" placeholder="候选内容"><button class="icon-btn danger" data-k="' + k + '" title="删除候选项">×</button></div>';
+    }).join('') || '<div class="empty" style="padding:12px 0">暂无候选项</div>';
+    document.getElementById('m-choices').querySelectorAll('[data-choice-type]').forEach(function(input){ input.addEventListener('change', function(){ choices[parseInt(input.dataset.choiceType, 10)].type = input.value; }); });
+    document.getElementById('m-choices').querySelectorAll('[data-choice-value]').forEach(function(input){ input.addEventListener('input', function(){ var choice = choices[parseInt(input.dataset.choiceValue, 10)]; choice.content = input.value; delete choice.path; delete choice.sticker; delete choice.value; }); });
+    document.getElementById('m-choices').querySelectorAll('[data-k]').forEach(function(b){
+      b.addEventListener('click', function(){ choices.splice(parseInt(b.dataset.k, 10), 1); renderChoices(); });
+    });
+  }
+  function renderStickers(){
+    var wrap = document.getElementById('m-sticker-wrap');
+    if(!wrap) return;
+    if(!STICKER_CATS.length){
+      wrap.innerHTML = '<div class="empty" style="padding:14px 0">表情库加载中，请稍候…</div>';
+      api('GET', '/api/stickers').then(function(j){
+        STICKER_CATS = (j.categories || []).map(function(c){
+          return {key: c.key, tab_index: c.tab_index, items: (c.items || []).map(function(it){ return {name: it.name, img: it.img}; })};
+        });
+        STICKER_MAP = {};
+        STICKER_CATS.forEach(function(c){ c.items.forEach(function(it){ STICKER_MAP[it.name] = it.img; }); });
+        renderStickers();
+      });
+      return;
+    }
+    if(!stickerCat){
+      var f = null;
+      STICKER_CATS.forEach(function(c){ if(!f && c.items.some(function(it){ return it.name === stickerSel; })) f = c; });
+      stickerCat = f ? f.key : STICKER_CATS[0].key;
+    }
+    var tabs = STICKER_CATS.map(function(c){
+      return '<span class="sticker-tab' + (c.key === stickerCat ? ' sel' : '') + '" data-key="' + esc(c.key) + '">' + esc(c.key) + '</span>';
+    }).join('');
+    var cur = null;
+    STICKER_CATS.forEach(function(c){ if(c.key === stickerCat) cur = c; });
+    if(!cur) cur = STICKER_CATS[0];
+    var grid = cur.items.map(function(it){
+      return '<div class="sticker-cell' + (it.name === stickerSel ? ' sel' : '') + '" data-name="' + esc(it.name) + '"><img src="' + esc(it.img) + '" loading="lazy" alt=""><span>' + esc(it.name) + '</span></div>';
+    }).join('');
+    wrap.innerHTML = '<label style="font-size:12.5px;font-weight:600">选择抖音表情</label><div class="sticker-tabs" id="m-sticker-tabs">' + tabs + '</div><div class="sticker-grid" id="m-sticker-grid">' + grid + '</div>';
+    wrap.querySelectorAll('.sticker-tab').forEach(function(tb){
+      tb.addEventListener('click', function(){ stickerCat = tb.dataset.key; renderStickers(); });
+    });
+    wrap.querySelectorAll('.sticker-cell').forEach(function(cell){
+      cell.addEventListener('click', function(){
+        stickerSel = cell.dataset.name;
+        renderStickers();
+        var val = document.getElementById('m-value');
+        if(val){ val.value = stickerSel; val.readOnly = true; }
+      });
+    });
+  }
+  renderChoices();
+  function syncType(){
+    var type = document.getElementById('m-type').value;
+    var isRandom = type === 'random';
+    var isSticker = type === 'douyin_sticker';
+    document.getElementById('m-main').style.display = (isRandom || isSticker) ? 'none' : 'block';
+    document.getElementById('m-random-wrap').style.display = isRandom ? 'block' : 'none';
+    document.getElementById('m-sticker-wrap').style.display = isSticker ? 'block' : 'none';
+    if(isSticker) renderStickers();
+  }
+  syncType();
+  document.getElementById('m-type').addEventListener('change', syncType);
+  document.getElementById('m-add-choice').addEventListener('click', function(){
+    choices.push({type: 'text', content: ''});
+    renderChoices();
+  });
+  document.getElementById('m-save').addEventListener('click', function(){
+    var type = document.getElementById('m-type').value;
+    var val = document.getElementById('m-value').value.trim();
+    var msg;
+    if(type === 'random'){
+      var valid = choices.filter(function(c){ return c.content || c.path || c.sticker || c.value; }).map(function(c){
+        var value = c.content || c.value || c.path || c.sticker || '';
+        if(c.type === 'image') return {type:'image', path:value};
+        if(c.type === 'douyin_sticker') return {type:'douyin_sticker', sticker:value};
+        return {type:'text', content:value};
+      });
+      if(!valid.length){ toast('随机消息至少需要一个候选项', true); return; }
+      msg = {type: 'random', choices: valid};
+    } else if(type === 'image'){
+      if(!val){ toast('请填写图片路径', true); return; }
+      msg = {type: 'image', path: val};
+    } else if(type === 'douyin_sticker'){
+      if(!stickerSel){ toast('请点选一个表情', true); return; }
+      msg = {type: 'douyin_sticker', sticker: stickerSel};
+    } else {
+      if(!val){ toast('请填写消息内容', true); return; }
+      msg = {type: 'text', content: val};
+    }
+    if(j >= 0) list[j] = msg; else list.push(msg);
+    closeModal();
+    if(after) after();
+  });
+}
+function openCustomMsgModal(i){
+  var t = model.targets[i];
+  var custom = isCustomContent(t);
+  var msgs = custom ? JSON.parse(JSON.stringify(t.messages)) : JSON.parse(JSON.stringify(model.globalMessages));
+  var body = '<p style="font-size:13px;color:var(--ink-2);margin-bottom:16px">为「' + esc(t.name) + '」选择内容来源。此处只应用到页面，统一由页面右上角保存。</p>' +
+    '<div class="field"><label>内容来源</label><select class="input" id="c-mode"><option value="global"' + (!custom ? ' selected' : '') + '>继承全局默认模板</option><option value="custom"' + (custom ? ' selected' : '') + '>开启单独设置</option></select></div>' +
+    '<div id="c-custom-wrap" style="display:' + (custom ? 'block' : 'none') + '"><label style="font-size:12.5px;font-weight:600">该好友自己的消息列表</label><div class="msg-list" id="c-msgs"></div><button class="btn btn-ghost btn-sm" id="c-add">+ 添加消息</button></div>';
+  openModal('编辑「' + t.name + '」的发送内容', body,
+    '<button class="btn btn-ghost" onclick="closeModal()">取消</button><button class="btn btn-primary" id="c-save">应用到页面</button>');
+  function renderC(){
+    document.getElementById('c-msgs').innerHTML = msgs.map(function(m, j){
+      return '<div class="msg-item">' + msgTypeTag(m) + '<div class="content">' + msgPreview(m) + '</div>' +
+        '<button class="icon-btn" data-j="' + j + '" data-act="edit"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>' +
+        '<button class="icon-btn danger" data-j="' + j + '" data-act="del"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button></div>';
+    }).join('') || '<div class="empty" style="padding:12px 0">暂无消息，保存后将恢复沿用全局</div>';
+    document.getElementById('c-msgs').querySelectorAll('[data-act]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var j = parseInt(b.dataset.j, 10);
+        if(b.dataset.act === 'del'){ msgs.splice(j, 1); renderC(); }
+        else openMsgEditor(msgs, j, renderC);
+      });
+    });
+  }
+  renderC();
+  document.getElementById('c-mode').addEventListener('change', function(){ document.getElementById('c-custom-wrap').style.display = this.value === 'custom' ? 'block' : 'none'; });
+  document.getElementById('c-add').addEventListener('click', function(){
+    msgs.push({type: 'text', content: ''});
+    renderC();
+  });
+  document.getElementById('c-save').addEventListener('click', function(){
+    var valid = msgs.filter(function(m){ return m.content || m.path || m.sticker || (m.choices && m.choices.length); });
+    if(document.getElementById('c-mode').value === 'custom'){
+      if(!valid.length){ toast('单独设置至少需要一条消息', true); return; }
+      t.messages = valid;
+      t.content_mode = 'custom';
+    } else {
+      t.messages = JSON.parse(JSON.stringify(model.globalMessages));
+      t.content_mode = 'global';
+    }
+    closeModal();
+    renderMessages();
+    markMessagesDirty();
+  });
+}
+document.getElementById('btn-save-messages').addEventListener('click', function(){
+  saveConfigModel('发送内容已保存');
+});
+function saveConfigModel(msg, throwOnError){
+  var payload = {
+    targets: model.targets.map(function(t){
+      return {name: t.name, douyin_id: t.douyin_id || null, messages: t.messages, content_mode: t.content_mode || 'global',
+        send_time: t.send_time || null, schedule_enabled: t.schedule_enabled !== false};
+    }),
+    global_messages: model.globalMessages,
+    send_interval: model.sendInterval,
+    prevent_duplicates: model.preventDuplicates,
+    stickers: model.stickers,
+    schedule_mode: model.scheduleMode
+  };
+  var hasDouyinId = payload.targets.some(function(t){ return !!t.douyin_id; });
+  if(hasDouyinId && !state.config.friend_douyin_id){
+    var unsupported = new Error('当前服务未加载抖音号功能，请重启工作台后再保存');
+    if(throwOnError) return Promise.reject(unsupported);
+    toast(unsupported.message, true);
+    return Promise.resolve();
+  }
+  return api('PUT', '/api/config' + (curId ? ('?account=' + encodeURIComponent(curId)) : ''), payload).then(function(j){
+    if(hasDouyinId && (!j.config.friend_douyin_id || !payload.targets.every(function(t){
+      var saved = (j.config.targets || []).find(function(item){ return item.name === t.name; });
+      return saved && (saved.douyin_id || null) === t.douyin_id;
+    }))) throw new Error('抖音号未保存成功，请重启工作台后再保存');
+    if(j.config.schedule_mode !== payload.schedule_mode || !payload.targets.every(function(t){
+      var saved = (j.config.targets || []).find(function(item){ return item.name === t.name; });
+      return saved && (!t.send_time || saved.send_time === t.send_time) && saved.schedule_enabled === t.schedule_enabled;
+    })) throw new Error('当前服务未加载好友定时功能，请重启工作台后再保存');
+    if(j.warn && throwOnError) throw new Error(j.warn);
+    state.config = j.config;
+    model.globalMessages = JSON.parse(JSON.stringify(j.config.global_messages));
+    model.targets = JSON.parse(JSON.stringify(j.config.targets));
+    var saveState = document.getElementById('messages-save-state');
+    if(saveState) saveState.textContent = '已保存到当前账号配置';
+    toast(j.warn || ((msg || '配置已保存') + '；待当前账号试运行验证'), !!j.warn);
+    return loadAll().then(function(){ return j; });
+  }).catch(function(e){
+    if(throwOnError) throw e;
+    toast('保存失败：' + e.message, true);
+  });
+}
+
+/* ---------- 定时计划 ---------- */
+function renderSchedule(){
+  if(!state) return;
+  var ov = state.overview;
+  var s = ov.schedule || {};
+  var grid = [
+    {k:'定时状态', v: esc(s.status || '未配置'), s: s.mode === 'windows' ? 'Windows 计划任务已连接' : '系统定时未生效', ready:s.mode === 'windows'},
+    {kind:'next-run', k:'下次运行', v: nextRunMarkup(ov.next_run), s: s.mode === 'windows' ? '将按当前计划自动执行' : '保存计划后查看', ready:false}
+  ];
+  document.getElementById('sched-grid').innerHTML = grid.map(function(g){
+    return '<div class="automation-status-card' + (g.kind ? ' ' + g.kind : '') + '"><div class="k">' + g.k + '</div><div class="v' + (g.ready ? ' ready' : '') + '">' + g.v + '</div><div class="s">' + esc(g.s) + '</div></div>';
+  }).join('');
+  var slotRows = (s.slots || []).map(function(slot){
+    var count = model.targets.filter(function(t){
+      return s.schedule_mode === 'friends'
+        ? t.schedule_enabled !== false && t.send_time === slot.time
+        : slot.time === s.configured_time;
+    }).length;
+    return '<div class="friend-schedule-detail" style="margin:0;padding:12px 0"><span><strong>每天 ' + esc(slot.time) + '</strong> · ' + count + ' 位好友</span><span>' + (slot.mode === 'windows' ? '系统计划已连接' : '系统计划待同步') + '</span></div>';
+  }).join('');
+  document.getElementById('sched-slots').innerHTML = slotRows || '<span style="color:var(--ink-3)">暂无启用的好友定时</span>';
+  document.getElementById('sched-tech-content').textContent = (s.slots || []).map(function(slot){
+    return slot.time + ' · ' + slot.task_name + ' · ' + slot.mode;
+  }).join('\n') || '尚无生效的好友发送时间';
+  document.getElementById('inp-time').value = s.configured_time || ov.trigger_time || '17:20';
+  var globalOn = s.schedule_mode !== 'friends';
+  document.getElementById('inp-global-schedule').checked = globalOn;
+  document.getElementById('inp-time').disabled = !globalOn;
+  document.getElementById('global-schedule-state').textContent = globalOn ? '已开启' : '已关闭 · 好友独立定时';
+  document.getElementById('inp-prevent').checked = model.preventDuplicates;
+  document.getElementById('inp-min').value = model.sendInterval.min;
+  document.getElementById('inp-max').value = model.sendInterval.max;
+  var banner = '';
+  if(s.mode === 'unsynced'){
+    banner = '<div class="banner banner-warn">发送时间已保存，但 Windows 系统定时未生效。' + esc(s.error || '') + '</div>';
+  } else if(s.mode === 'disabled'){
+    banner = '<div class="banner banner-info">当前账号已停用，不会自动发送。</div>';
+  } else if(s.mode === 'none'){
+    banner = '<div class="banner banner-warn"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg><div>未配置定时发送。请在「每天发送时间」输入时间后点「保存计划」。</div></div>';
+  } else if(s.error){
+    banner = '<div class="banner banner-warn"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg><div>计划任务查询异常：' + esc(s.error) + '</div></div>';
+  }
+  document.getElementById('sched-banner').innerHTML = banner;
+}
+document.getElementById('inp-global-schedule').addEventListener('change', function(){
+  document.getElementById('inp-time').disabled = !this.checked;
+  document.getElementById('global-schedule-state').textContent = this.checked ? '已开启' : '已关闭 · 好友独立定时';
+});
+document.getElementById('btn-save-schedule').addEventListener('click', function(){
+  var time = document.getElementById('inp-time').value;
+  var min = parseFloat(document.getElementById('inp-min').value);
+  var max = parseFloat(document.getElementById('inp-max').value);
+  if(!time){ toast('请选择发送时间', true); return; }
+  if(isNaN(min) || isNaN(max) || min < 0 || max < min){ toast('发送间隔需满足 0 <= 下限 <= 上限', true); return; }
+  model.sendInterval = {min: min, max: max};
+  model.preventDuplicates = document.getElementById('inp-prevent').checked;
+  saveConfigModel('自动化参数已保存', true).then(function(){
+    return api('PUT', '/api/schedule' + (curId ? ('?account=' + encodeURIComponent(curId)) : ''),
+      {time: time, mode: document.getElementById('inp-global-schedule').checked ? 'global' : 'friends'});
+  }).then(function(j){
+    if(j.warn) throw new Error(j.warn);
+    if(j.schedule.mode === 'disabled'){ toast('定时模式已保存；启用账号后需试运行验证'); }
+    else { toast('真实定时计划已更新；待试运行验证'); }
+    loadAll().then(renderSchedule);
+  }).catch(function(e){
+    toast('保存失败：' + e.message, true);
+  });
+});
+
+/* ---------- 运行 ---------- */
+function refreshRunLock(){
+  var seq = loadSeq;   // 记录当前序号：期间若有新 loadAll 则丢弃旧响应
+  var selected = curId;
+  api('GET', '/api/bootstrap' + (selected ? ('?account=' + encodeURIComponent(selected)) : '')).then(function(j){
+    if(seq !== loadSeq) return;
+    var locked = j.run_lock;
+    if(state) state.run_lock = locked;
+    if(state) state.validation = j.validation;
+    updateRunButtons();
+  }).catch(function(){});
+}
+document.getElementById('btn-add-account').addEventListener('click', addAccount);
+document.getElementById('btn-add-friend').addEventListener('click', function(){ openFriendModal(-1); });
+document.getElementById('btn-dryrun').addEventListener('click', function(){
+  startRun(true);
+});
+document.getElementById('btn-runnow').addEventListener('click', function(){
+  startRun(false);
+});
+function startRun(dry){
+  var label = dry ? '试运行' : '立即发送';
+  if(activeRun){
+    toast('已有任务在运行，请等待完成', true); return;
+  }
+  if(!model || !model.targets || !model.targets.length){
+    toast('当前账号「' + curAccountName() + '」还没有续火花好友，请先在「续火花好友」中添加再试', true);
+    return;
+  }
+  if(!dry && (!state.validation || state.validation.status !== 'passed')){
+    toast('当前账号待验证：请先点「试运行（不发送）」；通过后再正式发送', true);
+    return;
+  }
+  activeRun = {status: 'starting'};
+  updateRunButtons();
+  var accountId = curId || 'default';
+  toast((dry ? '试运行开始' : '已触发正式发送') + '：账号「' + curAccountName() + '」，打开浏览器校验登录并定位好友…');
+  api('POST', '/api/run', {dry_run: dry, account: curId || 'default'}).then(function(j){
+    activeRun = j;
+    pollRun(j.id, dry, accountId);
+  }).catch(function(e){
+    activeRun = null;
+    toast(e.message, true);
+    refreshRunLock();
+  });
+}
+function showFriendRunOutcome(friendName, task, result){
+  var items = Array.isArray(result && result.results) ? result.results : [];
+  var item = items.filter(function(value){ return value && value.target === friendName; })[0] || items[0] || {};
+  var sent = Number(item.sent) || 0;
+  var failed = task.status !== 'success' || item.status === 'failed';
+  var skipped = !failed && !sent;
+  var kind = failed ? 'failed' : (skipped ? 'skipped' : 'success');
+  var title = failed ? '发送失败' : (skipped ? '本次未发送' : '发送成功');
+  var icon = failed ? '!' : (skipped ? '–' : '✓');
+  var note = failed ? (task.error || item.error || '运行未完成，请查看运行记录后重试')
+    : sent ? ('已向「' + friendName + '」记录发送 ' + sent + ' 条内容；请在抖音客户端核对送达。')
+    : item.status === 'duplicate' ? '当天相同内容已按防重复规则跳过，本次没有新增发送。'
+    : '本次没有新增发送，请查看运行记录确认原因。';
+  openModal(title,
+    '<div class="run-outcome ' + kind + '"><div class="run-outcome-icon">' + icon + '</div><div><div class="run-outcome-title">' + esc(title) + ' · ' + esc(friendName) + '</div><div class="run-outcome-note">' + esc(note) + '</div><div class="run-outcome-meta">这是程序运行结果，不等于抖音客户端已送达。</div></div></div>',
+    '<button class="btn btn-primary" onclick="closeModal()">知道了</button>');
+}
+function pollRun(id, dry, accountId, friendName){
+  var timer = setInterval(function(){
+    api('GET', '/api/run/status?id=' + id).then(function(j){
+      if(j.status === 'running') return;
+      clearInterval(timer);
+      activeRun = null;
+      if(j.status !== 'success'){
+        var reason = j.error || ('退出码 ' + j.returncode + '，请查看运行记录');
+        if(/登录状态.*失效/.test(reason)) reason += '；请在当前账号点「重新登录」，完成扫码后再试运行';
+        if(!friendName) toast((dry ? '试运行' : '发送') + '失败：' + reason, true);
+      }
+      loadAll().then(function(){
+        renderDashboard(); renderLogs();
+        updateRunButtons();
+        var result = (state.logs && state.logs.result) || {};
+        if(friendName){
+          showFriendRunOutcome(friendName, j, result);
+        } else if(j.status === 'success'){
+          var sent = (result.results || []).reduce(function(n, item){ return n + (Number(item.sent) || 0); }, 0);
+          toast(dry ? '无发送试运行已通过，发送 0 条' : (friendName ? '「' + friendName + '」：' : '') + (sent
+            ? '本次程序记录发送 ' + sent + ' 条；请在抖音客户端核对送达'
+            : '本次新增发送 0 条；请查看该账号的防重复及运行记录'));
+        }
+      });
+    }).catch(function(){
+      clearInterval(timer);
+      activeRun = null;
+      toast('查询任务状态失败', true);
+      loadAll();
+    });
+  }, 3000);
+}
+function pollTask(id, done){
+  var timer = setInterval(function(){
+    api('GET', '/api/run/status?id=' + id).then(function(j){
+      if(j.status === 'running') return;
+      clearInterval(timer);
+      if(done) done(j);
+    }).catch(function(){ clearInterval(timer); if(done) done(null); });
+  }, 2000);
+}
+
+/* ---------- 运行记录 ---------- */
+function renderLogs(){
+  if(!state) return;
+  var logs = state.logs;
+  var runs = Array.isArray(logs.runs) ? logs.runs : [];
+  document.getElementById('log-count').textContent = (runs.length || logs.total_entries) + ' 条记录';
+  var el = document.getElementById('log-table');
+  if(!runs.length && !logs.entries.length){
+    el.innerHTML = '<div class="empty">暂无发送记录</div>';
+  } else {
+    var records = runs.length ? runs : logs.entries.map(function(entry){
+      return {finished_at: entry.finished_at || entry.started_at, scope:'legacy', target:entry.target, status:entry.status, sent:0};
+    });
+    var rows = records.map(function(e){
+      var t = (e.finished_at || e.started_at || '').replace('T', ' ').slice(0, 19) || (e.date || '—');
+      var scope = e.scope || 'legacy';
+      var detail = e.sent ? ('发送 ' + e.sent + ' 条') : (e.status === 'duplicate' ? '防重复跳过' : '未新增发送');
+      return '<tr><td>' + esc(t) + '</td><td><span class="activity-scope ' + esc(scope) + '">' + esc(scopeLabel(scope)) + '</span></td><td>' + esc(e.target || '好友') + '</td><td>' + statusPill(e.status) + '<div class="sub">' + esc(detail) + '</div></td></tr>';
+    }).join('');
+    el.innerHTML = '<table><colgroup><col style="width:26%"><col style="width:21%"><col style="width:27%"><col style="width:26%"></colgroup><thead><tr><th>时间</th><th>发送方式</th><th>对象</th><th>结果</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  }
+  var result = logs.result || {};
+  var items = Array.isArray(result.results) ? result.results : [];
+  var sent = items.reduce(function(n, item){ return n + (Number(item.sent) || 0); }, 0);
+  var failed = items.filter(function(item){ return item.status === 'failed'; }).length;
+  var summary = !result.finished_at ? '还没有运行结果' : failed ? '最近一次运行有 ' + failed + ' 位好友处理失败'
+    : result.dry_run ? '无发送试运行已完成，发送 0 条'
+    : sent ? '程序记录发送 ' + sent + ' 条消息' : '本次未新增发送消息';
+  if(result.finished_at && !result.dry_run && !failed && !sent && model.preventDuplicates && state.overview.today_status === '已发送'){
+    summary = '本次新增发送 0 条；今天已有发送记录，防重复已开启';
+  }
+  document.getElementById('result-summary').innerHTML = esc(summary) + '<small>' +
+    (result.finished_at ? '结束时间：' + esc(result.finished_at.replace('T', ' ').slice(0, 19)) + ' · 程序记录不等于客户端送达' : '可先在总览执行无发送试运行') + '</small>';
+  document.getElementById('result-block').textContent = JSON.stringify(logs.result || {}, null, 2);
+  var scheduleNotes = [];
+  var scheduleNames = {normal_triggered:'任务已触发',normal_pending:'正常任务仍在运行或结果待核对',normal_finished:'正常任务完成',normal_failed:'正常任务失败',starting:'补跑已启动',sent:'程序记录发送',already_sent:'当天已有程序发送',result_unknown:'发送结果不明，需核对客户端',validation_failed:'验证未通过',login_failed:'登录失败',process_start_failed:'进程启动失败',process_failed:'程序运行失败',config_failed:'配置检查失败',journal_failed:'记录异常',no_send:'未记录发送',expired:'跨天停止'};
+  if(logs.schedule_status && logs.schedule_status.at) scheduleNotes.push('正常定时：' + logs.schedule_status.at.replace('T',' ').slice(0,19) + ' · ' + (scheduleNames[logs.schedule_status.status] || logs.schedule_status.status) + ' · ' + (logs.schedule_status.detail || ''));
+  if(logs.catchup_status && logs.catchup_status.at) scheduleNotes.push('错时补跑：' + logs.catchup_status.at.replace('T',' ').slice(0,19) + ' · ' + (scheduleNames[logs.catchup_status.status] || logs.catchup_status.status) + ' · ' + (logs.catchup_status.detail || ''));
+  document.getElementById('log-tail').textContent = scheduleNotes.concat(logs.log_tail).join('\n') || '（暂无日志）';
+}
+document.getElementById('btn-refresh-logs').addEventListener('click', function(){
+  api('GET', '/api/logs' + (curId ? ('?account=' + encodeURIComponent(curId)) : '')).then(function(j){
+    state.logs = j;
+    renderLogs();
+    toast('已刷新');
+  }).catch(function(e){ toast(e.message, true); });
+});
+
+/* 总览只在可见时轮询运行产物，供后台定时与单好友任务完成后即时刷新。 */
+window.setInterval(function(){
+  if(curView !== 'dashboard' || document.hidden) return;
+  loadAll().catch(function(){});
+}, 5000);
+
+/* ---------- 通知设置 ---------- */
+function renderNotify(){
+  if(!state) return;
+  var n = state.notify;
+  var dingStatus = document.getElementById('ding-status');
+  var webhookStatus = document.getElementById('webhook-status');
+  dingStatus.textContent = n.dingtalk_enabled ? '已配置' : '未配置';
+  webhookStatus.textContent = n.webhook_url_configured ? '已配置' : '未配置';
+  dingStatus.classList.toggle('configured', !!n.dingtalk_enabled);
+  webhookStatus.classList.toggle('configured', !!n.webhook_url_configured);
+  document.getElementById('inp-ding-webhook').value = '';
+  document.getElementById('inp-ding-secret').value = '';
+  document.getElementById('inp-webhook-url').value = '';
+  document.getElementById('inp-webhook-headers').value = '';
+  document.getElementById('inp-webhook-template').value = '';
+}
+document.getElementById('btn-save-notify').addEventListener('click', function(){
+  var payload = {
+    dingtalk_webhook: document.getElementById('inp-ding-webhook').value.trim(),
+    dingtalk_secret: document.getElementById('inp-ding-secret').value.trim(),
+    webhook_url: document.getElementById('inp-webhook-url').value.trim(),
+    webhook_headers: document.getElementById('inp-webhook-headers').value.trim(),
+    webhook_template: document.getElementById('inp-webhook-template').value.trim()
+  };
+  api('PUT', '/api/notify', payload).then(function(j){
+    state.notify = j.notify;
+    renderNotify();
+    toast('通知配置已保存到 .env');
+  }).catch(function(e){ toast('保存失败：' + e.message, true); });
+});
+
+/* ---------- 启动 ---------- */
+loadAll().catch(function(e){
+  document.getElementById('server-status').textContent = '连接失败';
+  document.getElementById('dash-cards').innerHTML = '<div class="banner banner-warn" style="grid-column:1/-1"><div>无法连接本地工作台。请双击“启动控制台.bat”，再刷新页面。</div></div>';
+}).then(function(){
+  var h = location.hash.replace('#','');
+  goView(VIEWS.indexOf(h) > -1 ? h : 'dashboard');
+});
+</script>
+</body>
+</html>

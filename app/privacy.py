@@ -22,6 +22,9 @@ def build_target_aliases(targets: Iterable[object]) -> dict[str, str]:
             name = target
         if name:
             aliases[name] = target_alias(index)
+        douyin_id = getattr(target, "douyin_id", None)
+        if douyin_id:
+            aliases[douyin_id] = target_alias(index)
     return aliases
 
 

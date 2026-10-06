@@ -9,6 +9,42 @@ from app.accounts import Account
 from app.config import ConfigError
 
 
+@pytest.fixture(autouse=True)
+def stub_validation_for_existing_runner_tests(monkeypatch):
+    """已有运行逻辑测试聚焦账号隔离；验证拦截由专门测试覆盖。"""
+    monkeypatch.setattr(runner_module, "require_validation", lambda *args: None)
+
+
+def test_unvalidated_account_never_starts_run(monkeypatch, tmp_path: Path) -> None:
+    env_file = _env_file(tmp_path, ".env.a", "DOUYIN_COOKIE=dummy\n")
+    task_path = tmp_path / "task.json"
+    task_path.write_text("{}", encoding="utf-8")
+    called = []
+
+    async def fake_run(**kwargs):
+        called.append(kwargs)
+        return 0
+
+    monkeypatch.setattr(runner_module, "load_accounts", lambda: [_account("a", env_file)])
+    monkeypatch.setattr(runner_module, "_parse_cli_args", lambda: SimpleNamespace(dry_run=False, env_file=None))
+    monkeypatch.setattr(runner_module, "load_settings", lambda _env=None: SimpleNamespace(
+        task_config_path=task_path, artifacts_dir=tmp_path / "artifacts"))
+    monkeypatch.setattr(runner_module, "_configure_logging", lambda *args, **kwargs: None)
+    monkeypatch.setattr(runner_module, "run", fake_run)
+    monkeypatch.setattr(runner_module, "require_validation", lambda *args: (_ for _ in ()).throw(
+        ConfigError("未通过无发送试运行")))
+
+    assert runner_module.run_all_accounts() == 1
+    assert called == []
+
+
+def test_disabled_account_is_rejected(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(runner_module, "load_accounts", lambda: [])
+    monkeypatch.setattr(runner_module, "_parse_cli_args", lambda: SimpleNamespace(dry_run=False, env_file=None))
+    assert runner_module.run_all_accounts(only="account3") == 2
+    assert "已停用" in capsys.readouterr().out
+
+
 def _env_file(tmp_path: Path, name: str, content: str) -> Path:
     path = tmp_path / name
     path.write_text(content, encoding="utf-8")
@@ -94,7 +130,7 @@ def test_run_all_accounts_account_failure_does_not_block_others(monkeypatch, tmp
     monkeypatch.setattr(runner_module, "load_accounts", lambda: [_account("a", env_a), _account("b", env_b)])
     monkeypatch.setattr(runner_module, "_parse_cli_args", lambda: SimpleNamespace(dry_run=False, env_file=None))
     monkeypatch.setattr(runner_module, "run", fake_run)
-    monkeypatch.setattr(runner_module, "load_settings", lambda _env=None: SimpleNamespace(artifacts_dir=tmp_path / "artifacts"))
+    monkeypatch.setattr(runner_module, "load_settings", lambda _env=None: SimpleNamespace(artifacts_dir=tmp_path / "artifacts", task_config_path=tmp_path / "task.json"))
     monkeypatch.setattr(runner_module, "_configure_logging", lambda *args, **kwargs: None)
 
     result = runner_module.run_all_accounts()
@@ -115,7 +151,7 @@ def test_run_all_accounts_legacy_env_cleared_for_each_account(monkeypatch, tmp_p
     monkeypatch.setattr(runner_module, "load_accounts", lambda: [_account("a", env_a)])
     monkeypatch.setattr(runner_module, "_parse_cli_args", lambda: SimpleNamespace(dry_run=False, env_file=None))
     monkeypatch.setattr(runner_module, "run", fake_run)
-    monkeypatch.setattr(runner_module, "load_settings", lambda _env=None: SimpleNamespace(artifacts_dir=tmp_path / "artifacts"))
+    monkeypatch.setattr(runner_module, "load_settings", lambda _env=None: SimpleNamespace(artifacts_dir=tmp_path / "artifacts", task_config_path=tmp_path / "task.json"))
     monkeypatch.setattr(runner_module, "_configure_logging", lambda *args, **kwargs: None)
 
     assert runner_module.run_all_accounts() == 0
@@ -134,7 +170,7 @@ def test_run_all_accounts_all_success_returns_zero(monkeypatch, tmp_path: Path) 
     monkeypatch.setattr(runner_module, "load_accounts", lambda: [_account("a", env_a), _account("b", env_b)])
     monkeypatch.setattr(runner_module, "_parse_cli_args", lambda: SimpleNamespace(dry_run=False, env_file=None))
     monkeypatch.setattr(runner_module, "run", fake_run)
-    monkeypatch.setattr(runner_module, "load_settings", lambda _env=None: SimpleNamespace(artifacts_dir=tmp_path / "artifacts"))
+    monkeypatch.setattr(runner_module, "load_settings", lambda _env=None: SimpleNamespace(artifacts_dir=tmp_path / "artifacts", task_config_path=tmp_path / "task.json"))
     monkeypatch.setattr(runner_module, "_configure_logging", lambda *args, **kwargs: None)
 
     assert runner_module.run_all_accounts() == 0
@@ -150,7 +186,7 @@ def test_run_all_accounts_all_failed_returns_one(monkeypatch, tmp_path: Path) ->
     monkeypatch.setattr(runner_module, "load_accounts", lambda: [_account("a", env_a)])
     monkeypatch.setattr(runner_module, "_parse_cli_args", lambda: SimpleNamespace(dry_run=False, env_file=None))
     monkeypatch.setattr(runner_module, "run", fake_run)
-    monkeypatch.setattr(runner_module, "load_settings", lambda _env=None: SimpleNamespace(artifacts_dir=tmp_path / "artifacts"))
+    monkeypatch.setattr(runner_module, "load_settings", lambda _env=None: SimpleNamespace(artifacts_dir=tmp_path / "artifacts", task_config_path=tmp_path / "task.json"))
     monkeypatch.setattr(runner_module, "_configure_logging", lambda *args, **kwargs: None)
 
     assert runner_module.run_all_accounts() == 1
@@ -171,6 +207,28 @@ def test_run_all_accounts_no_enabled_accounts_skips(monkeypatch) -> None:
     assert calls == []
 
 
+def test_successful_dry_run_records_validation(monkeypatch, tmp_path: Path) -> None:
+    env_file = _env_file(tmp_path, ".env.a", "DOUYIN_COOKIE=cookie-a\n")
+    task_path = tmp_path / "task.json"
+    task_path.write_text("{}", encoding="utf-8")
+    artifacts = tmp_path / "artifacts"
+    recorded = []
+
+    async def fake_run(dry_run: bool = False, env_file: str | None = None) -> int:
+        assert dry_run
+        return 0
+
+    monkeypatch.setattr(runner_module, "load_accounts", lambda: [_account("a", env_file)])
+    monkeypatch.setattr(runner_module, "_parse_cli_args", lambda: SimpleNamespace(dry_run=True, env_file=None))
+    monkeypatch.setattr(runner_module, "run", fake_run)
+    monkeypatch.setattr(runner_module, "load_settings", lambda _env=None: SimpleNamespace(artifacts_dir=artifacts, task_config_path=task_path))
+    monkeypatch.setattr(runner_module, "_configure_logging", lambda *args, **kwargs: None)
+    monkeypatch.setattr(runner_module, "record_validation", lambda *args: recorded.append(args))
+
+    assert runner_module.run_all_accounts() == 0
+    assert recorded == [("a", task_path, artifacts)]
+
+
 def test_run_all_accounts_missing_env_file_fails_only_that_account(monkeypatch, tmp_path: Path) -> None:
     env_a = tmp_path / ".env.missing"
     env_b = _env_file(tmp_path, ".env.b", "DOUYIN_COOKIE=cookie-b\n")
@@ -183,7 +241,7 @@ def test_run_all_accounts_missing_env_file_fails_only_that_account(monkeypatch, 
     monkeypatch.setattr(runner_module, "load_accounts", lambda: [_account("a", env_a), _account("b", env_b)])
     monkeypatch.setattr(runner_module, "_parse_cli_args", lambda: SimpleNamespace(dry_run=False, env_file=None))
     monkeypatch.setattr(runner_module, "run", fake_run)
-    monkeypatch.setattr(runner_module, "load_settings", lambda _env=None: SimpleNamespace(artifacts_dir=tmp_path / "artifacts"))
+    monkeypatch.setattr(runner_module, "load_settings", lambda _env=None: SimpleNamespace(artifacts_dir=tmp_path / "artifacts", task_config_path=tmp_path / "task.json"))
     monkeypatch.setattr(runner_module, "_configure_logging", lambda *args, **kwargs: None)
 
     assert runner_module.run_all_accounts() == 1
@@ -199,7 +257,7 @@ def test_run_all_accounts_uses_per_account_artifacts_dir(monkeypatch, tmp_path: 
         return 0
 
     def fake_load_settings(env_file=None):
-        settings = SimpleNamespace(artifacts_dir=Path(os.environ["ARTIFACTS_DIR"]))
+        settings = SimpleNamespace(artifacts_dir=Path(os.environ["ARTIFACTS_DIR"]), task_config_path=tmp_path / "task.json")
         lock_dirs.append(settings.artifacts_dir)
         return settings
 

@@ -218,7 +218,11 @@ async def send_douyin_sticker(page: Page, sticker: Sticker) -> None:
         await button.click(force=True)
         panel = await first_visible(page, STICKER_PANELS)
 
-        if sticker.category:
+        if sticker.tab_index is not None:
+            tabs = panel.locator('.emojiEmojisModalTabsubTab')
+            if await tabs.count() > sticker.tab_index:
+                await tabs.nth(sticker.tab_index).click(force=True)
+        elif sticker.category:
             category = panel.get_by_text(sticker.category, exact=True)
             if await category.count() and await category.first.is_visible():
                 await category.first.click()

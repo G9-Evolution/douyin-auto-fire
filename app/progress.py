@@ -6,11 +6,21 @@ from dataclasses import dataclass
 from typing import Literal
 
 
+def _console_write(value: str) -> None:
+    """进度提示是附属输出，终端编码或管道故障不得中断任务。"""
+    try:
+        if sys.stdout.isatty():
+            sys.stdout.write(value)
+            sys.stdout.flush()
+    except (UnicodeError, OSError):
+        pass
+
+
 @dataclass
 class ProgressBar:
     """简单的命令行进度条。
 
-    不依赖第三方库，使用纯ASCII字符绘制。
+    不依赖第三方库；无法显示进度字符时不影响任务执行。
     """
 
     total: int
@@ -38,15 +48,11 @@ class ProgressBar:
         output = f"\r{self.prefix} |{bar}| {self.current}/{self.total} ({percent:.1f}%)"
 
         # 只在支持回车覆盖的终端输出
-        if sys.stdout.isatty():
-            sys.stdout.write(output)
-            sys.stdout.flush()
+        _console_write(output)
 
     def finish(self):
         """完成进度条，换行。"""
-        if sys.stdout.isatty():
-            sys.stdout.write("\n")
-            sys.stdout.flush()
+        _console_write("\n")
 
 
 class MultiStageProgress:
@@ -89,8 +95,7 @@ class MultiStageProgress:
             self.progress_bar._render()
         else:
             # 没有具体数量，只显示状态
-            if sys.stdout.isatty():
-                print(f"{prefix} {stage_name}...", flush=True)
+            _console_write(f"{prefix} {stage_name}...\n")
             self.progress_bar = None
 
     def update_progress(self, step: int = 1):
@@ -108,8 +113,7 @@ class MultiStageProgress:
         """完成所有阶段。"""
         if self.progress_bar:
             self.progress_bar.finish()
-        if sys.stdout.isatty():
-            print("✓ 所有阶段完成", flush=True)
+        _console_write("✓ 所有阶段完成\n")
 
 
 class TargetProgress:
@@ -131,8 +135,7 @@ class TargetProgress:
     def start_target(self, target_name: str):
         """开始处理一个目标。"""
         self.current += 1
-        if sys.stdout.isatty():
-            print(f"\n[{self.current}/{self.total}] {self.label}: {target_name}", flush=True)
+        _console_write(f"\n[{self.current}/{self.total}] {self.label}: {target_name}\n")
 
     def finish_target(self, status: Literal["success", "failed"]):
         """完成一个目标。"""

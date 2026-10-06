@@ -33,7 +33,7 @@ class RiskControlError(RuntimeError):
 
 
 class SearchBoxNotReadyError(RuntimeError):
-    """私信页已打开但搜索框未就绪；说明渲染慢，而非登录失效。"""
+    """好友搜索框未就绪；仅凭此错误不能判断登录或好友状态。"""
 
 
 # 私信页是 SPA，domcontentloaded 之后搜索框由 JS 异步挂载，冷启动时可能超过
@@ -161,6 +161,16 @@ async def open_private_messages(page: Page, timeout_ms: int = 15_000) -> None:
     #    explicit login marker justifies AuthenticationError; a page that is
     #    already on /chat merely failed to render the search box in time.
     diagnostic = await _collect_safe_diagnostic(page, LOGIN_REQUIRED_MARKERS, RISK_MARKERS)
+    # The diagnostic itself takes time; the box may mount during its collection.
+    matched = await _first_visible_selector(page, SEARCH_INPUTS, 1_000)
+    if matched is not None:
+        if await _any_visible(page, RISK_MARKERS, timeout_ms=1_000):
+            raise RiskControlError("抖音私信页面要求进行安全验证，任务已停止")
+        if await _any_visible(page, LOGIN_REQUIRED_MARKERS, timeout_ms=1_000):
+            raise AuthenticationError("进入抖音私信页面后登录状态失效")
+        LOGGER.info("诊断后检测到好友搜索框: selector=%s", matched)
+        await page.wait_for_timeout(3_000)
+        return
     LOGGER.error("多次重试后仍未检测到好友搜索框，页面安全诊断:\n%s", diagnostic)
     raise SearchBoxNotReadyError(f"私信页面已打开，但搜索框在 {SEARCH_BOX_RETRIES} 次重试后仍未就绪")
 
@@ -186,18 +196,15 @@ async def _first_visible_selector(
     selectors: tuple[str, ...],
     timeout_ms: int,
 ) -> str | None:
-    """Return the first selector whose element becomes visible, or None.
-
-    Unlike ``_any_visible`` this also reports *which* selector matched, so the
-    diagnostic can distinguish a slow render from a structural change.
-    """
-    per_selector = max(250, timeout_ms // max(1, len(selectors)))
+    """Wait for all alternatives together so a late earlier match is not missed."""
+    combined = ", ".join(f"{selector}:visible" for selector in selectors)
+    try:
+        await page.locator(combined).first.wait_for(state="visible", timeout=timeout_ms)
+    except Exception:
+        return None
     for selector in selectors:
-        try:
-            await page.locator(selector).first.wait_for(state="visible", timeout=per_selector)
+        if await page.locator(f"{selector}:visible").count():
             return selector
-        except Exception:
-            continue
     return None
 
 

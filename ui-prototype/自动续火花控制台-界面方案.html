@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>自动续火花 · 管理控制台（界面方案）</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23FE2C55'/%3E%3Cpath d='M34 6L14 34h12l-4 24 24-32H32l2-20z' fill='white'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#F6F7F9;
+  --card:#FFFFFF;
+  --line:#E6E8EC;
+  --ink:#161823;
+  --ink-2:#6E7480;
+  --ink-3:#9AA0AB;
+  --accent:#FE2C55;
+  --accent-soft:#FFF0F3;
+  --cyan:#25F4EE;
+  --sidebar:#14141C;
+  --sidebar-2:#1E1E2A;
+  --ok:#16A34A;
+  --ok-soft:#E9F7EF;
+  --warn:#D97706;
+  --warn-soft:#FDF3E3;
+  --bad:#DC2626;
+  --bad-soft:#FDECEC;
+  --radius:12px;
+  --shadow:0 1px 2px rgba(20,20,28,.04),0 4px 16px rgba(20,20,28,.05);
+  --font:"Segoe UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif;
+  --mono:"Cascadia Mono","Consolas","Microsoft YaHei",monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit}
+
+/* ===== 布局骨架 ===== */
+.app{display:flex;min-height:100vh}
+.sidebar{width:232px;flex:none;background:var(--sidebar);color:#C9CCD6;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:10px;padding:20px 20px 18px}
+.brand-logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--accent) 0%,#FF7A45 100%);display:flex;align-items:center;justify-content:center;flex:none}
+.brand-logo svg{width:18px;height:18px;stroke:#fff}
+.brand-name{font-weight:700;font-size:15px;color:#fff;letter-spacing:.2px}
+.brand-sub{font-size:11px;color:#6E7280;margin-top:1px}
+.nav{flex:1;padding:6px 12px;overflow-y:auto}
+.nav-label{font-size:11px;color:#565B66;padding:14px 10px 6px;letter-spacing:.5px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;color:#B9BDC8;font-size:13.5px;cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:background .15s,color .15s}
+.nav-item svg{width:17px;height:17px;stroke:currentColor;flex:none}
+.nav-item:hover{background:var(--sidebar-2);color:#fff}
+.nav-item.active{background:var(--sidebar-2);color:#fff;font-weight:600}
+.nav-item.active::after{content:"";margin-left:auto;width:4px;height:4px;border-radius:50%;background:var(--accent)}
+.sidebar-foot{padding:14px 20px;border-top:1px solid #26262F;font-size:11.5px;color:#6E7280}
+.sidebar-foot .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ok);margin-right:6px;vertical-align:1px}
+
+.main{flex:1;min-width:0;padding:28px 34px 60px;max-width:1180px}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+.page-title{font-size:22px;font-weight:700;letter-spacing:.2px}
+.page-desc{color:var(--ink-2);font-size:13px;margin-top:5px;max-width:640px}
+.head-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+/* ===== 按钮 ===== */
+.btn{display:inline-flex;align-items:center;gap:7px;border-radius:9px;padding:8px 14px;font-size:13px;font-weight:600;border:1px solid transparent;transition:all .15s;white-space:nowrap}
+.btn svg{width:15px;height:15px;stroke:currentColor}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#E7244C}
+.btn-ghost{background:#fff;border-color:var(--line);color:var(--ink)}
+.btn-ghost:hover{border-color:#CDD2DA;background:#FAFBFC}
+.btn-dark{background:#fff;color:var(--ink)}
+.btn-sm{padding:5px 10px;font-size:12px;border-radius:7px}
+.btn-danger{background:#fff;border-color:#F3C7C7;color:var(--bad)}
+.btn-danger:hover{background:var(--bad-soft)}
+
+/* ===== 卡片与统计 ===== */
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow)}
+.card .k{font-size:12px;color:var(--ink-2);display:flex;align-items:center;gap:6px;margin-bottom:9px}
+.card .k svg{width:14px;height:14px;stroke:var(--ink-3)}
+.card .v{font-size:24px;font-weight:700;letter-spacing:.3px;line-height:1.15}
+.card .s{font-size:12px;color:var(--ink-2);margin-top:6px;display:flex;align-items:center;gap:5px}
+.card .s .pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:20px}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;padding:2.5px 9px;border-radius:20px;line-height:1.4}
+.pill .pd{width:6px;height:6px;border-radius:50%}
+.pill-ok{background:var(--ok-soft);color:var(--ok)}.pill-ok .pd{background:var(--ok)}
+.pill-warn{background:var(--warn-soft);color:var(--warn)}.pill-warn .pd{background:var(--warn)}
+.pill-bad{background:var(--bad-soft);color:var(--bad)}.pill-bad .pd{background:var(--bad)}
+.pill-gray{background:#F0F1F4;color:var(--ink-2)}.pill-gray .pd{background:var(--ink-3)}
+.pill-red{background:var(--accent-soft);color:var(--accent)}.pill-red .pd{background:var(--accent)}
+
+/* ===== 面板 ===== */
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.panel-title{font-size:14.5px;font-weight:700;display:flex;align-items:center;gap:8px}
+.panel-title svg{width:16px;height:16px;stroke:var(--ink-2)}
+.panel-sub{font-size:12px;color:var(--ink-2);margin-top:2px}
+.panel-body{padding:18px}
+
+/* ===== 表格 ===== */
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+th{font-size:12px;color:var(--ink-2);font-weight:600;text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);background:#FAFBFC}
+td{padding:11px 14px;border-bottom:1px solid #F0F1F4;font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:#FBFCFD}
+td .name{font-weight:600;font-size:13.5px}
+td .sub{font-size:11.5px;color:var(--ink-3);margin-top:2px}
+.row-actions{display:flex;gap:6px;justify-content:flex-end}
+.icon-btn{width:28px;height:28px;border-radius:7px;border:1px solid var(--line);background:#fff;color:var(--ink-2);display:inline-flex;align-items:center;justify-content:center;transition:all .15s}
+.icon-btn svg{width:14px;height:14px;stroke:currentColor}
+.icon-btn:hover{border-color:#CDD2DA;color:var(--ink);background:#FAFBFC}
+.icon-btn.danger:hover{border-color:#F3C7C7;color:var(--bad);background:var(--bad-soft)}
+.text-btn{background:none;border:none;color:var(--accent);font-size:12.5px;font-weight:600;padding:4px 6px;border-radius:6px}
+.text-btn:hover{background:var(--accent-soft)}
+
+/* ===== 开关 ===== */
+.switch{position:relative;width:36px;height:20px;flex:none;cursor:pointer}
+.switch input{opacity:0;width:0;height:0;position:absolute}
+.switch .track{position:absolute;inset:0;background:#D4D8DF;border-radius:20px;transition:background .2s}
+.switch .thumb{position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;top:2px;left:2px;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:transform .2s}
+.switch input:checked + .track{background:var(--accent)}
+.switch input:checked + .track + .thumb{transform:translateX(16px)}
+.row-switch{display:flex;align-items:center;gap:10px;justify-content:flex-end}
+
+/* ===== 徽章/状态 ===== */
+.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;vertical-align:1px}
+.banner{display:flex;gap:12px;align-items:flex-start;border-radius:10px;padding:12px 14px;font-size:12.5px;margin-bottom:18px;border:1px solid}
+.banner svg{width:16px;height:16px;flex:none;margin-top:1px;stroke:currentColor}
+.banner-info{background:#EEF4FF;border-color:#CFE0FF;color:#2458B3}
+.banner-warn{background:var(--warn-soft);border-color:#F6DFB8;color:#92600A}
+.banner b{font-weight:600}
+.mono{font-family:var(--mono);font-size:12px;background:#F4F5F7;border:1px solid #EDEFF2;border-radius:6px;padding:2px 7px;color:#3D4452}
+
+/* ===== 表单 ===== */
+.field{margin-bottom:16px}
+.field label{display:block;font-size:12.5px;font-weight:600;margin-bottom:7px}
+.field .hint{font-size:11.5px;color:var(--ink-3);margin-top:5px;line-height:1.5}
+.input,textarea.input,select.input{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 12px;font-size:13.5px;background:#fff;color:var(--ink);outline:none;transition:border-color .15s,box-shadow .15s}
+.input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(254,44,85,.12)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+
+/* ===== 弹窗 ===== */
+.modal-mask{position:fixed;inset:0;background:rgba(16,16,22,.45);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+.modal-mask.open{display:flex}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:460px;box-shadow:0 24px 64px rgba(0,0,0,.18);overflow:hidden;animation:pop .18s ease}
+@keyframes pop{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line)}
+.modal-title{font-size:15.5px;font-weight:700}
+.modal-close{width:28px;height:28px;border-radius:7px;border:none;background:#F3F4F6;color:var(--ink-2);display:flex;align-items:center;justify-content:center}
+.modal-close svg{width:14px;height:14px;stroke:currentColor}
+.modal-body{padding:20px;max-height:62vh;overflow-y:auto}
+.modal-foot{display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid var(--line);background:#FAFBFC}
+.steplist{list-style:none;counter-reset:step}
+.steplist li{position:relative;padding:0 0 18px 38px;font-size:13px;color:var(--ink)}
+.steplist li::before{counter-increment:step;content:counter(step);position:absolute;left:0;top:0;width:24px;height:24px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center}
+.steplist li:last-child{padding-bottom:4px}
+.steplist li b{font-weight:600}
+.steplist .step-sub{color:var(--ink-2);font-size:12px;margin-top:3px;line-height:1.6}
+.steplist li:not(:last-child)::after{content:"";position:absolute;left:11.5px;top:24px;bottom:2px;width:1px;background:var(--line)}
+
+/* ===== Toast ===== */
+#toast-zone{position:fixed;top:20px;right:20px;z-index:200;display:flex;flex-direction:column;gap:10px}
+.toast{background:#161823;color:#fff;font-size:13px;border-radius:10px;padding:11px 16px;display:flex;align-items:center;gap:9px;box-shadow:0 8px 24px rgba(0,0,0,.22);animation:slidein .2s ease;max-width:340px}
+.toast svg{width:16px;height:16px;stroke:var(--cyan);flex:none}
+@keyframes slidein{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
+.toast.out{opacity:0;transform:translateX(20px);transition:all .25s}
+
+/* ===== 账号卡片 ===== */
+.account-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.account-card{border:1px solid var(--line);border-radius:var(--radius);padding:16px;background:#fff;position:relative}
+.account-card:hover{border-color:#CDD2DA}
+.account-card .top{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.avatar{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#161823,#3A3A4A);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex:none}
+.avatar.on{background:linear-gradient(135deg,var(--accent),#FF7A45)}
+.account-card .nick{font-weight:700;font-size:14.5px;display:flex;align-items:center;gap:7px}
+.account-card .douid{font-size:12px;color:var(--ink-3);margin-top:2px;font-family:var(--mono)}
+.account-card .meta{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-2);margin-bottom:14px;flex-wrap:wrap}
+.account-card .ops{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.tag-default{font-size:10.5px;font-weight:700;background:#161823;color:#fff;padding:2px 8px;border-radius:4px;letter-spacing:.5px}
+.add-card{border:1.5px dashed #CDD2DA;border-radius:var(--radius);background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;color:var(--ink-2);cursor:pointer;min-height:150px;transition:all .15s}
+.add-card:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.add-card svg{width:22px;height:22px;stroke:currentColor}
+
+/* ===== 消息编辑 ===== */
+.msg-list{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+.msg-item{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:10px;padding:11px 14px;background:#fff}
+.msg-item .type-tag{font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;flex:none}
+.tt-text{background:#EEF4FF;color:#2458B3}
+.tt-random{background:#F3E8FF;color:#7C3AED}
+.tt-sticker{background:var(--accent-soft);color:var(--accent)}
+.tt-image{background:#E6FBF8;color:#0E8F7E}
+.msg-item .content{flex:1;font-size:13px;color:var(--ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.msg-item .content .gray{color:var(--ink-2)}
+.msg-item .content .choice{color:var(--ink-2)}
+
+/* ===== 时间线 ===== */
+.timeline{margin:6px 0 2px}
+.tl-row{display:grid;grid-template-columns:96px 22px 1fr;gap:0;padding:8px 0}
+.tl-time{font-size:12px;color:var(--ink-2);font-family:var(--mono);padding-top:1px;text-align:right;padding-right:12px}
+.tl-axis{position:relative;display:flex;justify-content:center}
+.tl-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);position:relative;z-index:1;align-self:center;border:2px solid #fff;box-shadow:0 0 0 2px var(--accent)}
+.tl-dot.ok{background:var(--ok);box-shadow:0 0 0 2px var(--ok)}
+.tl-dot.warn{background:var(--warn);box-shadow:0 0 0 2px var(--warn)}
+.tl-axis::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:1px;background:var(--line)}
+.tl-content{padding-left:12px;font-size:13px}
+.tl-content b{font-weight:600}
+.tl-content .sub{font-size:12px;color:var(--ink-2);margin-top:2px}
+
+/* ===== 调度状态 ===== */
+.sched-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:6px}
+.sched-item{border:1px solid var(--line);border-radius:10px;padding:14px 16px;background:#fff}
+.sched-item .k{font-size:12px;color:var(--ink-2);margin-bottom:7px;display:flex;align-items:center;gap:7px}
+.sched-item .k svg{width:14px;height:14px;stroke:var(--ink-3)}
+.sched-item .v{font-size:15px;font-weight:700}
+.sched-item .s{font-size:11.5px;color:var(--ink-3);margin-top:4px}
+.time-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+/* ===== 代码块 ===== */
+.code-block{background:#161823;color:#D6D9E0;border-radius:10px;padding:14px 16px;font-family:var(--mono);font-size:12px;line-height:1.7;overflow-x:auto}
+.code-block .cm{color:#6E7280}
+
+/* ===== 页脚 ===== */
+.foot-note{margin-top:26px;font-size:12px;color:var(--ink-3);border-top:1px solid var(--line);padding-top:16px;display:flex;gap:18px;flex-wrap:wrap}
+.foot-note span{display:inline-flex;align-items:center;gap:6px}
+.foot-note svg{width:13px;height:13px;stroke:currentColor}
+
+/* ===== 响应式 ===== */
+@media(max-width:1020px){
+  .cards{grid-template-columns:repeat(2,1fr)}
+  .account-grid,.sched-grid{grid-template-columns:1fr}
+}
+@media(max-width:760px){
+  .app{flex-direction:column}
+  .sidebar{width:100%;height:auto;position:static;flex-direction:row;align-items:center;overflow-x:auto}
+  .brand{padding:12px 16px}
+  .nav{display:flex;flex-direction:row;gap:4px;padding:8px 10px;flex:1}
+  .nav-label{display:none}
+  .nav-item{width:auto;white-space:nowrap;font-size:12.5px;padding:7px 10px}
+  .nav-item svg{display:none}
+  .sidebar-foot{display:none}
+  .main{padding:20px 16px 44px}
+  .cards{grid-template-columns:1fr 1fr;gap:10px}
+  .form-grid{grid-template-columns:1fr}
+  .page-head{flex-direction:column}
+  body{font-size:14.5px}
+  input,textarea{font-size:16px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<!-- ===== 侧边栏 ===== -->
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 13.5H11L9.5 22 19 10.5h-6.5L13 2z"/></svg>
+    </div>
+    <div>
+      <div class="brand-name">自动续火花</div>
+      <div class="brand-sub">抖音消息 · 本地控制台</div>
+    </div>
+  </div>
+  <nav class="nav" id="nav">
+    <div class="nav-label">管理</div>
+    <button class="nav-item" data-view="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>总览</button>
+    <button class="nav-item" data-view="accounts"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.5 3.6-5.5 7-5.5s6.2 2 7 5.5"/></svg>账号管理</button>
+    <button class="nav-item" data-view="friends"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11a4 4 0 100-8 4 4 0 000 8z"/><path d="M2 21c.6-4 3.8-6 7-6s6.4 2 7 6"/><path d="M17 8a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/><path d="M19 12.5c2 .7 3.4 2.6 3.9 5"/></svg>续火花好友</button>
+    <button class="nav-item" data-view="messages"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 01-9 8.4 8.9 8.9 0 01-3.8-.8L3 20.5l1.4-5A8.4 8.4 0 113 11.5a8.4 8.4 0 0118 0z"/><path d="M8.5 10.5h7M8.5 13.5h4.5"/></svg>发送内容</button>
+    <div class="nav-label">自动化</div>
+    <button class="nav-item" data-view="schedule"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>定时计划</button>
+    <button class="nav-item" data-view="logs"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>运行记录</button>
+    <button class="nav-item" data-view="notify"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 1112 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.5 21a2 2 0 003 0"/></svg>通知设置</button>
+  </nav>
+  <div class="sidebar-foot"><span class="dot"></span>本地服务运行中</div>
+</aside>
+
+<main class="main" id="main">
+
+<!-- ===== 视图：总览 ===== -->
+<section class="view" id="view-dashboard">
+  <div class="page-head">
+    <div>
+      <div class="page-title">总览</div>
+      <div class="page-desc">当前默认账号与续火花任务的运行状态一览。</div>
+    </div>
+    <div class="head-actions">
+      <button class="btn btn-ghost" onclick="toast(&#39;试运行：仅校验登录与好友定位，不发送消息（方案原型）&#39;)"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5.5v13l11-6.5-11-6.5z"/></svg>试运行</button>
+      <button class="btn btn-primary" onclick="toast(&#39;已触发正式发送任务（方案原型，未真正执行）&#39;)"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/></svg>立即发送</button>
+    </div>
+  </div>
+
+  <div class="banner banner-info">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+    <div>本页为<b>界面方案原型</b>，展示数据均为示例。正式版本将接入本地服务（127.0.0.1）实时读取真实配置与运行状态。</div>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="k"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.5 3.6-5.5 7-5.5s6.2 2 7 5.5"/></svg>当前账号</div>
+      <div class="v">小顾的号</div>
+      <div class="s"><span class="pill pill-ok"><span class="pd"></span>登录有效</span></div>
+    </div>
+    <div class="card">
+      <div class="k"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11a4 4 0 100-8 4 4 0 000 8z"/><path d="M2 21c.6-4 3.8-6 7-6s6.4 2 7 6"/></svg>续火花好友</div>
+      <div class="v">2 <span style="font-size:13px;color:var(--ink-3);font-weight:500">个</span></div>
+      <div class="s">小顾 · 诗酒</div>
+    </div>
+    <div class="card">
+      <div class="k"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>下次运行</div>
+      <div class="v">17:20</div>
+      <div class="s">今天 · 每天定时</div>
+    </div>
+    <div class="card">
+      <div class="k"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/></svg>今日状态</div>
+      <div class="v"><span class="pill pill-ok" style="font-size:14px;padding:3px 12px"><span class="pd"></span>已发送</span></div>
+      <div class="s">22:13 发往「小顾」</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <div class="panel-title">最近发送记录</div>
+        <div class="panel-sub">最近 5 次运行结果（示例）</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" data-goto="logs">查看全部</button>
+    </div>
+    <table>
+      <colgroup><col style="width:22%"><col style="width:18%"><col style="width:20%"><col style="width:22%"><col style="width:18%"></colgroup>
+      <thead><tr><th>时间</th><th>账号</th><th>好友</th><th>结果</th><th>详情</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">09-29 22:13</td><td>小顾的号</td><td><span class="name">小顾</span></td><td><span class="pill pill-ok"><span class="pd"></span>成功</span></td><td>发送 1 条</td></tr>
+        <tr><td class="mono">09-28 17:20</td><td>小顾的号</td><td><span class="name">小顾</span></td><td><span class="pill pill-ok"><span class="pd"></span>成功</span></td><td>发送 1 条</td></tr>
+        <tr><td class="mono">09-27 17:20</td><td>小顾的号</td><td><span class="name">小顾</span></td><td><span class="pill pill-gray"><span class="pd"></span>跳过</span></td><td>当天已发送</td></tr>
+        <tr><td class="mono">09-26 17:20</td><td>小顾的号</td><td><span class="name">诗酒</span></td><td><span class="pill pill-warn"><span class="pd"></span>失败</span></td><td>好友定位超时</td></tr>
+        <tr><td class="mono">09-25 17:20</td><td>小顾的号</td><td><span class="name">小顾</span></td><td><span class="pill pill-ok"><span class="pd"></span>成功</span></td><td>发送 1 条</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ===== 视图：账号管理 ===== -->
+<section class="view" id="view-accounts" style="display:none">
+  <div class="page-head">
+    <div>
+      <div class="page-title">账号管理</div>
+      <div class="page-desc">管理用于续火花的抖音账号：添加 / 切换登录、启用停用。登录凭证保存在本机，不会在界面中明文显示。</div>
+    </div>
+    <div class="head-actions">
+      <button class="btn btn-primary" onclick="openModal('add-account&#39;)"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>添加账号</button>
+    </div>
+  </div>
+
+  <div class="banner banner-info">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+    <div>每个账号对应一份独立的登录凭证（<span class="mono">storage-state.&lt;id&gt;.json</span>）与运行配置（<span class="mono">.env.account&lt;id&gt;</span>），互不干扰。设定「默认账号」后，定时任务默认使用该账号运行。</div>
+  </div>
+
+  <div class="account-grid" id="account-grid">
+    <div class="account-card">
+      <div class="top">
+        <div class="avatar on">顾</div>
+        <div>
+          <div class="nick">小顾的号 <span class="tag-default">默认</span></div>
+          <div class="douid">抖音号 Grc20060916</div>
+        </div>
+      </div>
+      <div class="meta">
+        <span class="pill pill-ok"><span class="pd"></span>登录有效</span>
+        <span>凭证 2026-09-29 更新</span>
+      </div>
+      <div class="ops">
+        <label class="switch"><input type="checkbox" checked onchange="toast(&#39;已切换账号启用状态（方案原型）&#39;)"><span class="track"></span><span class="thumb"></span></label>
+        <div style="display:flex;gap:6px">
+          <button class="icon-btn" title="设为默认" onclick="toast(&#39;已设为默认账号（方案原型）&#39;)"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4L4.2 8.7l5.4-.8L12 3z"/></svg></button>
+          <button class="icon-btn" title="编辑备注" onclick="openModal('edit-account&#39;)"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
+          <button class="icon-btn danger" title="删除账号" onclick="toast(&#39;删除需二次确认；将移除该账号凭证文件（方案原型）&#39;)"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="account-card">
+      <div class="top">
+        <div class="avatar">备</div>
+        <div>
+          <div class="nick">备用号</div>
+          <div class="douid">抖音号 待登录</div>
+        </div>
+      </div>
+      <div class="meta">
+        <span class="pill pill-bad"><span class="pd"></span>未登录</span>
+        <span>需要补充登录凭证</span>
+      </div>
+      <div class="ops">
+        <label class="switch"><input type="checkbox" onchange="toast(&#39;已切换账号启用状态（方案原型）&#39;)"><span class="track"></span><span class="thumb"></span></label>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-primary btn-sm" onclick="openModal('add-account&#39;)">去登录</button>
+          <button class="icon-btn danger" title="删除账号" onclick="toast(&#39;删除需二次确认（方案原型）&#39;)"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <button class="add-card" onclick="openModal('add-account&#39;)">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+      <span style="font-size:13px;font-weight:600">添加抖音账号</span>
+      <span style="font-size:11.5px;color:var(--ink-3)">扫码登录，凭证保存本机</span>
+    </button>
+  </div>
+</section>
+
+<!-- ===== 视图：续火花好友 ===== -->
+<section class="view" id="view-friends" style="display:none">
+  <div class="page-head">
+    <div>
+      <div class="page-title">续火花好友</div>
+      <div class="page-desc">管理每天接收消息的好友名单，可自由增删改。发送时按好友在抖音私信列表中的<b>备注名</b>定位。</div>
+    </div>
+    <div class="head-actions">
+      <button class="btn btn-primary" onclick="openModal('add-friend&#39;)"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>添加好友</button>
+    </div>
+  </div>
+
+  <div class="banner banner-warn">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.6L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.6a2 2 0 00-3.4 0z"/></svg>
+    <div>好友名请填写抖音私信列表中显示的<b>备注名</b>（例如「小顾」），而不是原昵称「诗酒」。添加时会后台校验名称可定位。</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <div class="panel-title">好友名单</div>
+        <div class="panel-sub">共 3 人 · 其中 2 人启用（示例）</div>
+      </div>
+    </div>
+    <table>
+      <colgroup><col style="width:24%"><col style="width:26%"><col style="width:16%"><col style="width:14%"><col style="width:20%"></colgroup>
+      <thead><tr><th>备注名</th><th>抖音号（参考）</th><th>发送内容</th><th>启用</th><th style="text-align:right">操作</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="name">小顾</span><div class="sub">原昵称：诗酒</div></td>
+          <td class="mono" style="color:var(--ink-2)">Grc20060916</td>
+          <td><span class="pill pill-gray">沿用全局</span></td>
+          <td><label class="switch"><input type="checkbox" checked onchange="toast(&#39;已更新好友启用状态（方案原型）&#39;)"><span class="track"></span><span class="thumb"></span></label></td>
+          <td><div class="row-actions">
+            <button class="text-btn" onclick="openModal('edit-friend&#39;)">编辑</button>
+            <button class="text-btn" style="color:var(--bad)" onclick="toast(&#39;删除需二次确认（方案原型）&#39;)">删除</button>
+          </div></td>
+        </tr>
+        <tr>
+          <td><span class="name">诗酒</span><div class="sub">原昵称：诗酒</div></td>
+          <td class="mono" style="color:var(--ink-2)">—</td>
+          <td><span class="pill pill-red">自定义 2 条</span></td>
+          <td><label class="switch"><input type="checkbox" checked onchange="toast(&#39;已更新好友启用状态（方案原型）&#39;)"><span class="track"></span><span class="thumb"></span></label></td>
+          <td><div class="row-actions">
+            <button class="text-btn" onclick="openModal('edit-friend&#39;)">编辑</button>
+            <button class="text-btn" style="color:var(--bad)" onclick="toast(&#39;删除需二次确认（方案原型）&#39;)">删除</button>
+          </div></td>
+        </tr>
+        <tr>
+          <td><span class="name">花花</span><div class="sub">原昵称：—</div></td>
+          <td class="mono" style="color:var(--ink-2)">—</td>
+          <td><span class="pill pill-gray">沿用全局</span></td>
+          <td><label class="switch"><input type="checkbox" onchange="toast(&#39;已更新好友启用状态（方案原型）&#39;)"><span class="track"></span><span class="thumb"></span></label></td>
+          <td><div class="row-actions">
+            <button class="text-btn" onclick="openModal('edit-friend&#39;)">编辑</button>
+            <button class="text-btn" style="color:var(--bad)" onclick="toast(&#39;删除需二次确认（方案原型）&#39;)">删除</button>
+          </div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ===== 视图：发送内容 ===== -->
+<section class="view" id="view-messages" style="display:none">
+  <div class="page-head">
+    <div>
+      <div class="page-title">发送内容</div>
+      <div class="page-desc">配置默认发送的消息内容。所有好友默认沿用全局内容，也可为单个好友单独设置。</div>
+    </div>
+    <div class="head-actions">
+      <button class="btn btn-primary" onclick="openModal('add-message&#39;)"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>添加消息</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <div class="panel-title">全局默认内容</div>
+        <div class="panel-sub">所有好友未单独设置时发送以下内容</div>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="msg-list">
+        <div class="msg-item">
+          <span class="type-tag tt-text">文字</span>
+          <div class="content">mm</div>
+          <div style="display:flex;gap:6px">
+            <button class="icon-btn" onclick="toast(&#39;编辑消息（方案原型）&#39;)"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
+            <button class="icon-btn danger" onclick="toast(&#39;删除需二次确认（方案原型）&#39;)"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="openModal('add-message&#39;)"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>添加消息</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <div class="panel-title">按好友单独设置</div>
+        <div class="panel-sub">「诗酒」使用自定义内容，其他好友沿用全局</div>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;margin-bottom:10px">
+        <div>
+          <div style="font-weight:600;font-size:13.5px">诗酒</div>
+          <div style="font-size:12px;color:var(--ink-2);margin-top:2px">每日随机 2 选 1</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="openModal('edit-friend-msg&#39;)">编辑内容</button>
+      </div>
+      <div class="msg-list" style="margin:0">
+        <div class="msg-item">
+          <span class="type-tag tt-random">随机</span>
+          <div class="content"><span class="choice">①「早上好，火花别断」</span> <span class="gray">或</span> <span class="choice">② 表情「开心」</span></div>
+          <div style="display:flex;gap:6px">
+            <button class="icon-btn" onclick="toast(&#39;编辑消息（方案原型）&#39;)"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
+            <button class="icon-btn danger" onclick="toast(&#39;删除需二次确认（方案原型）&#39;)"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 视图：定时计划 ===== -->
+<section class="view" id="view-schedule" style="display:none">
+  <div class="page-head">
+    <div>
+      <div class="page-title">定时计划</div>
+      <div class="page-desc">管理每日自动发送计划：设定时间、启用停用，并可视化查看 Windows 计划任务状态。</div>
+    </div>
+    <div class="head-actions">
+      <button class="btn btn-ghost" onclick="toast(&#39;试运行：仅校验登录与好友定位（方案原型）&#39;)"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5.5v13l11-6.5-11-6.5z"/></svg>试运行</button>
+      <button class="btn btn-primary" onclick="toast(&#39;保存后立即更新 Windows 计划任务（方案原型，未真正写入）&#39;)"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>保存计划</button>
+    </div>
+  </div>
+
+  <div class="sched-grid">
+    <div class="sched-item">
+      <div class="k"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>每日发送时间</div>
+      <div class="time-row">
+        <input type="time" value="17:20" class="input" style="width:130px;font-size:15px;font-weight:700" onchange="toast(&#39;已调整发送时间（方案原型）&#39;)">
+        <span style="font-size:12.5px;color:var(--ink-2)">每天 · 时区 Asia/Shanghai</span>
+      </div>
+      <div class="s">修改后点击「保存计划」才会写入 Windows 计划任务</div>
+    </div>
+    <div class="sched-item">
+      <div class="k"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6h3a1 1 0 011 1v12a1 1 0 01-1 1H7a1 1 0 01-1-1v-3"/><path d="M14 2H4a1 1 0 00-1 1v13"/><path d="M6 8h6M6 12h4"/></svg>计划任务状态</div>
+      <div class="v" style="display:flex;align-items:center;gap:10px">
+        <span class="pill pill-ok"><span class="pd"></span>已注册</span>
+        <span class="mono" style="font-weight:600">DouyinAutoFire</span>
+      </div>
+      <div class="s">下次触发：今天 17:20 · 无头模式运行</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <div class="panel-title">自动化开关</div>
+        <div class="panel-sub">关闭后保留配置，但计划任务不再触发</div>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:6px 2px">
+        <div>
+          <div style="font-weight:600;font-size:14px">每日自动续火花</div>
+          <div style="font-size:12.5px;color:var(--ink-2);margin-top:3px">每天定时向启用的好友发送配置的消息内容</div>
+        </div>
+        <label class="switch" style="transform:scale(1.15)"><input type="checkbox" checked onchange="toast(&#39;已切换自动发送开关（方案原型）&#39;)"><span class="track"></span><span class="thumb"></span></label>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:6px 2px;margin-top:16px;border-top:1px solid var(--line);padding-top:18px">
+        <div>
+          <div style="font-weight:600;font-size:14px">同一天不重复发送</div>
+          <div style="font-size:12.5px;color:var(--ink-2);margin-top:3px">当天已发送过的好友自动跳过，防止刷屏</div>
+        </div>
+        <label class="switch" style="transform:scale(1.15)"><input type="checkbox" checked onchange="toast(&#39;已切换防重复开关（方案原型）&#39;)"><span class="track"></span><span class="thumb"></span></label>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <div class="panel-title">运行说明</div>
+        <div class="panel-sub">正式版本由本地服务调用 Windows 任务计划程序完成注册 / 更新 / 启停</div>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="code-block">
+<span class="cm"># 正式版本后台执行示例（由界面按钮触发，用户无需手敲）</span><br>
+Register-ScheduledTask -TaskName "DouyinAutoFire" -Trigger (New-ScheduledTaskTrigger -Daily -At 17:20) -Action (New-ScheduledTaskAction -Execute "E:\豆包项目库\自动续火花\.venv\Scripts\python.exe" -Argument "run.py" -WorkingDirectory "E:\豆包项目库\自动续火花")<br>
+Set-ScheduledTask -TaskName "DouyinAutoFire" -Settings (New-ScheduledTaskSettingsSet -StartWhenAvailable)
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 视图：运行记录 ===== -->
+<section class="view" id="view-logs" style="display:none">
+  <div class="page-head">
+    <div>
+      <div class="page-title">运行记录</div>
+      <div class="page-desc">查看每次发送的执行结果与详细日志，定位失败原因。</div>
+    </div>
+    <div class="head-actions">
+      <button class="btn btn-ghost" onclick="toast(&#39;已刷新运行记录（方案原型）&#39;)"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-2.6-6.3"/><path d="M21 3v6h-6"/></svg>刷新</button>
+      <button class="btn btn-ghost" onclick="toast(&#39;已导出运行记录（方案原型）&#39;)"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>导出</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <div class="panel-title">发送历史</div>
+        <div class="panel-sub">近 7 天 · 示例数据</div>
+      </div>
+    </div>
+    <table>
+      <colgroup><col style="width:16%"><col style="width:14%"><col style="width:14%"><col style="width:14%"><col style="width:18%"><col style="width:24%"></colgroup>
+      <thead><tr><th>时间</th><th>账号</th><th>好友</th><th>结果</th><th>消息数</th><th>备注</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">09-29 22:13</td><td>小顾的号</td><td>小顾</td><td><span class="pill pill-ok"><span class="pd"></span>成功</span></td><td>1</td><td style="color:var(--ink-2)">文字「mm」</td></tr>
+        <tr><td class="mono">09-28 17:20</td><td>小顾的号</td><td>小顾</td><td><span class="pill pill-ok"><span class="pd"></span>成功</span></td><td>1</td><td style="color:var(--ink-2)">文字「mm」</td></tr>
+        <tr><td class="mono">09-27 17:20</td><td>小顾的号</td><td>小顾</td><td><span class="pill pill-gray"><span class="pd"></span>跳过</span></td><td>0</td><td style="color:var(--ink-2)">防重复：当天已发送</td></tr>
+        <tr><td class="mono">09-26 17:20</td><td>小顾的号</td><td>诗酒</td><td><span class="pill pill-warn"><span class="pd"></span>失败</span></td><td>0</td><td style="color:var(--ink-2)">好友定位超时（15s）</td></tr>
+        <tr><td class="mono">09-25 17:20</td><td>小顾的号</td><td>小顾</td><td><span class="pill pill-ok"><span class="pd"></span>成功</span></td><td>1</td><td style="color:var(--ink-2)">文字「mm」</td></tr>
+        <tr><td class="mono">09-24 17:20</td><td>小顾的号</td><td>小顾</td><td><span class="pill pill-ok"><span class="pd"></span>成功</span></td><td>1</td><td style="color:var(--ink-2)">文字「mm」</td></tr>
+        <tr><td class="mono">09-23 17:20</td><td>小顾的号</td><td>小顾</td><td><span class="pill pill-bad"><span class="pd"></span>异常</span></td><td>0</td><td style="color:var(--ink-2)">登录凭证失效，需重新登录</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <div class="panel-title">最近日志</div>
+        <div class="panel-sub">artifacts/run.log 尾部 12 行 · 示例</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="toast(&#39;正式版本将提供实时日志流（方案原型）&#39;)">实时日志</button>
+    </div>
+    <div class="panel-body">
+      <div class="code-block">
+<span class="cm">2026-09-29 22:12:58</span> [info] 任务开始：daily-streak（单账号模式）<br>
+<span class="cm">2026-09-29 22:13:01</span> [info] 读取配置 config.json，好友 1 人<br>
+<span class="cm">2026-09-29 22:13:05</span> [info] 使用登录凭证 storage-state.json<br>
+<span class="cm">2026-09-29 22:13:09</span> [info] 已打开抖音私信页，开始定位好友「小顾」<br>
+<span class="cm">2026-09-29 22:13:12</span> [info] 好友「小顾」定位成功<br>
+<span class="cm">2026-09-29 22:13:14</span> [info] 发送文字消息 mm<br>
+<span class="cm">2026-09-29 22:13:15</span> [success] 好友「小顾」完成，发送 1 条<br>
+<span class="cm">2026-09-29 22:13:16</span> [info] 任务完成，成功 1 / 失败 0
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 视图：通知设置 ===== -->
+<section class="view" id="view-notify" style="display:none">
+  <div class="page-head">
+    <div>
+      <div class="page-title">通知设置</div>
+      <div class="page-desc">发送结果可通过钉钉机器人或通用 Webhook 推送到手机，失败时及时知晓。</div>
+    </div>
+    <div class="head-actions">
+      <button class="btn btn-primary" onclick="toast(&#39;已保存通知配置（方案原型，写入 .env）&#39;)"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>保存设置</button>
+    </div>
+  </div>
+
+  <div class="banner banner-info">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+    <div>通知密钥保存于 <span class="mono">.env</span>，界面仅提供编辑入口，不会明文回显密钥。</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <div class="panel-title">钉钉机器人</div>
+        <div class="panel-sub">在钉钉群添加自定义机器人后获取 Webhook 与加签密钥</div>
+      </div>
+      <label class="switch"><input type="checkbox" onchange="toast(&#39;已切换钉钉通知开关（方案原型）&#39;)"><span class="track"></span><span class="thumb"></span></label>
+    </div>
+    <div class="panel-body">
+      <div class="field">
+        <label>Webhook 地址</label>
+        <input class="input" placeholder="https://oapi.dingtalk.com/robot/send?access_token=..." onchange="toast(&#39;已记录（方案原型）&#39;)">
+        <div class="hint">保存后用于接收发送结果通知</div>
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label>加签密钥（SEC 开头）</label>
+        <input class="input" type="password" placeholder="SEC..." value="••••••••••••••" onchange="toast(&#39;已记录（方案原型）&#39;)">
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <div class="panel-title">通用 Webhook</div>
+        <div class="panel-sub">支持飞书 / 企业微信等自定义机器人</div>
+      </div>
+      <label class="switch"><input type="checkbox" onchange="toast(&#39;已切换 Webhook 通知开关（方案原型）&#39;)"><span class="track"></span><span class="thumb"></span></label>
+    </div>
+    <div class="panel-body">
+      <div class="field">
+        <label>Webhook URL</label>
+        <input class="input" placeholder="https://example.com/webhook" onchange="toast(&#39;已记录（方案原型）&#39;)">
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label>自定义请求头（可选）</label>
+        <textarea class="input" rows="2" placeholder='{"Authorization": "Bearer token"}' onchange="toast(&#39;已记录（方案原型）&#39;)"></textarea>
+        <div class="hint">JSON 格式，例如 {"Content-Type": "application/json"}</div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+<!-- ===== 弹窗容器 ===== -->
+<div class="modal-mask" id="modal-mask">
+  <div class="modal" id="modal-box">
+    <div class="modal-head">
+      <div class="modal-title" id="modal-title">标题</div>
+      <button class="modal-close" onclick="closeModal()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-foot" id="modal-foot"></div>
+  </div>
+</div>
+
+<div id="toast-zone"></div>
+
+<script>
+/* ===== 路由 ===== */
+var VIEWS = ['dashboard','accounts','friends','messages','schedule','logs','notify'];
+function goView(v){
+  if(VIEWS.indexOf(v)===-1) v='dashboard';
+  VIEWS.forEach(function(x){
+    var el=document.getElementById('view-'+x);
+    if(el) el.style.display = (x===v)?'block':'none';
+  });
+  document.querySelectorAll('.nav-item').forEach(function(n){
+    n.classList.toggle('active', n.dataset.view===v);
+  });
+  location.hash = v;
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('.nav-item').forEach(function(n){
+  n.addEventListener('click', function(){ goView(n.dataset.view); });
+});
+document.querySelectorAll('[data-goto]').forEach(function(el){
+  el.addEventListener('click', function(){ goView(el.dataset.goto); });
+});
+window.addEventListener('hashchange', function(){
+  var h = location.hash.replace('#','');
+  if(VIEWS.indexOf(h)>-1) goView(h);
+});
+(function(){
+  var h=location.hash.replace('#','');
+  goView(VIEWS.indexOf(h)>-1?h:'dashboard');
+})();
+
+/* ===== Toast ===== */
+function toast(msg){
+  var zone=document.getElementById('toast-zone');
+  var t=document.createElement('div');
+  t.className='toast';
+  t.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span></span>';
+  t.querySelector('span').textContent=msg;
+  zone.appendChild(t);
+  setTimeout(function(){ t.classList.add('out'); }, 2800);
+  setTimeout(function(){ t.remove(); }, 3100);
+}
+
+/* ===== 弹窗 ===== */
+var MODALS = {
+  'add-account': {
+    title:'添加抖音账号',
+    body:
+      '<p style="font-size:13px;color:var(--ink-2);margin-bottom:16px;line-height:1.7">将弹出浏览器窗口完成抖音登录，成功后登录凭证自动保存到本机，与当前账号互不影响。</p>'+
+      '<ol class="steplist">'+
+      '<li><b>点击「开始登录」</b><div class="step-sub">本机弹出抖音登录窗口（可扫码或验证码）</div></li>'+
+      '<li><b>在抖音完成登录</b><div class="step-sub">系统每 8 秒检测一次登录状态，成功即自动保存凭证</div></li>'+
+      '<li><b>登录成功</b><div class="step-sub">自动读取昵称与抖音号，账号加入列表并可设为默认</div></li>'+
+      '</ol>',
+    foot:
+      '<button class="btn btn-ghost" onclick="closeModal()">取消</button>'+
+      '<button class="btn btn-primary" onclick="toast(\'开始登录：将弹出抖音登录窗口（方案原型）\');closeModal()">开始登录</button>'
+  },
+  'edit-account': {
+    title:'编辑账号',
+    body:
+      '<div class="field"><label>备注名</label><input class="input" value="小顾的号" onchange="toast(\'已修改备注（方案原型）\')"><div class="hint">仅本控制台显示用，不影响抖音侧名称</div></div>'+
+      '<div class="field" style="margin-bottom:0"><label>启用此账号</label><div style="padding:8px 0"><label class="switch"><input type="checkbox" checked onchange="toast(\'已切换（方案原型）\')"><span class="track"></span><span class="thumb"></span></label></div></div>',
+    foot:
+      '<button class="btn btn-ghost" onclick="closeModal()">取消</button>'+
+      '<button class="btn btn-primary" onclick="toast(\'账号信息已保存（方案原型）\');closeModal()">保存</button>'
+  },
+  'add-friend': {
+    title:'添加续火花好友',
+    body:
+      '<div class="field"><label>备注名（必填）</label><input class="input" placeholder="例如：小顾" onchange="toast(\'已填写（方案原型）\')"><div class="hint">填写抖音私信列表中显示的<b>备注名</b>，而非原昵称</div></div>'+
+      '<div class="field"><label>抖音号（可选，便于校验）</label><input class="input" placeholder="例如：Grc20060916" onchange="toast(\'已填写（方案原型）\')"><div class="hint">填写后添加时可自动定位校验，避免输错备注名</div></div>'+
+      '<div class="field" style="margin-bottom:0"><label>发送内容</label><select class="input" onchange="toast(\'已选择（方案原型）\')"><option>沿用全局内容（mm）</option><option>单独设置内容</option></select></div>',
+    foot:
+      '<button class="btn btn-ghost" onclick="closeModal()">取消</button>'+
+      '<button class="btn btn-primary" onclick="toast(\'好友已添加，并在后台校验备注名可定位（方案原型）\');closeModal()">添加并校验</button>'
+  },
+  'edit-friend': {
+    title:'编辑好友',
+    body:
+      '<div class="field"><label>备注名</label><input class="input" value="小顾" onchange="toast(\'已修改（方案原型）\')"></div>'+
+      '<div class="field"><label>抖音号（参考）</label><input class="input" value="Grc20060916" onchange="toast(\'已修改（方案原型）\')"></div>'+
+      '<div class="field" style="margin-bottom:0"><label>发送内容</label><select class="input" onchange="toast(\'已选择（方案原型）\')"><option>沿用全局内容</option><option>单独设置内容</option></select></div>',
+    foot:
+      '<button class="btn btn-ghost" onclick="closeModal()">取消</button>'+
+      '<button class="btn btn-primary" onclick="toast(\'好友信息已保存（方案原型）\');closeModal()">保存</button>'
+  },
+  'add-message': {
+    title:'添加消息',
+    body:
+      '<div class="field"><label>消息类型</label><select class="input" onchange="toast(\'已选择消息类型（方案原型）\')"><option>文字</option><option>随机（多条中每日任选一条）</option><option>抖音原生表情</option><option>图片</option></select></div>'+
+      '<div class="field"><label>内容</label><textarea class="input" rows="3" placeholder="输入消息内容…" onchange="toast(\'已填写（方案原型）\')"></textarea><div class="hint">文字消息将原样发送，例如「mm」</div></div>'+
+      '<div class="field" style="margin-bottom:0"><label>作用范围</label><select class="input" onchange="toast(\'已选择（方案原型）\')"><option>全局默认（所有好友）</option><option>仅指定好友</option></select></div>',
+    foot:
+      '<button class="btn btn-ghost" onclick="closeModal()">取消</button>'+
+      '<button class="btn btn-primary" onclick="toast(\'消息已添加（方案原型）\');closeModal()">添加</button>'
+  },
+  'edit-friend-msg': {
+    title:'编辑「诗酒」的发送内容',
+    body:
+      '<p style="font-size:13px;color:var(--ink-2);margin-bottom:14px">该好友不沿用全局内容，每天发送下面任一条。</p>'+
+      '<div class="msg-item" style="margin-bottom:10px"><span class="type-tag tt-text">文字</span><div class="content">早上好，火花别断</div><button class="icon-btn danger" onclick="toast(\'删除需二次确认（方案原型）\')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button></div>'+
+      '<div class="msg-item" style="margin-bottom:14px"><span class="type-tag tt-sticker">表情</span><div class="content">开心</div><button class="icon-btn danger" onclick="toast(\'删除需二次确认（方案原型）\')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button></div>'+
+      '<button class="btn btn-ghost btn-sm" onclick="toast(\'添加消息（方案原型）\')"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>添加消息</button>',
+    foot:
+      '<button class="btn btn-ghost" onclick="toast(\'恢复为沿用全局内容（方案原型）\');closeModal()">恢复全局</button>'+
+      '<button class="btn btn-primary" onclick="toast(\'内容已保存（方案原型）\');closeModal()">保存</button>'
+  }
+};
+function openModal(key){
+  var m=MODALS[key];
+  if(!m) return;
+  document.getElementById('modal-title').textContent=m.title;
+  document.getElementById('modal-body').innerHTML=m.body;
+  document.getElementById('modal-foot').innerHTML=m.foot||'';
+  document.getElementById('modal-mask').classList.add('open');
+}
+function closeModal(){
+  document.getElementById('modal-mask').classList.remove('open');
+}
+document.getElementById('modal-mask').addEventListener('click', function(e){
+  if(e.target===this) closeModal();
+});
+document.addEventListener('keydown', function(e){
+  if(e.key==='Escape') closeModal();
+});
+</script>
+</div>
+</body>
+</html>

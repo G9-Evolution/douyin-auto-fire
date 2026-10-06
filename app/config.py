@@ -2,16 +2,31 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
 
 from app.models import Message, Settings, Sticker, Target, TaskConfig
+from app.schedule_slots import normalize_send_time
 
 
 class ConfigError(ValueError):
     pass
+
+
+def normalize_douyin_id(value: Any, label: str = "抖音号") -> str | None:
+    if value is None or value == "":
+        return None
+    if not isinstance(value, str):
+        raise ConfigError(f"{label} 必须是字符串")
+    value = value.strip()
+    if not value:
+        return None
+    if not re.fullmatch(r"[A-Za-z0-9_.]+", value):
+        raise ConfigError(f"{label} 只能填写字母、数字、下划线或点，不要填写昵称或主页链接")
+    return value
 
 
 def load_settings(env_file: str | Path | None = None) -> Settings:
@@ -62,6 +77,9 @@ def load_task(settings: Settings) -> TaskConfig:
         raise ConfigError("targets 必须是非空数组")
 
     targets = tuple(_parse_target(item, index, settings.task_config_path.parent) for index, item in enumerate(targets_raw))
+    douyin_ids = [target.douyin_id.casefold() for target in targets if target.douyin_id]
+    if len(douyin_ids) != len(set(douyin_ids)):
+        raise ConfigError("同一账号的好友列表不能重复填写同一个抖音号")
     interval = raw.get("send_interval_seconds", {})
     if not isinstance(interval, dict):
         raise ConfigError("send_interval_seconds 必须是对象")
@@ -96,7 +114,13 @@ def load_task(settings: Settings) -> TaskConfig:
         prevent_duplicates=raw.get("prevent_duplicates", False),
         target_open_retries=target_open_retries,
         target_open_timeout_seconds=target_open_timeout_seconds,
+        send_time=normalize_send_time(raw["send_time"], "账号默认发送时间") if raw.get("send_time") else None,
+        schedule_mode=raw.get("schedule_mode", "legacy"),
     )
+    if task.schedule_mode not in ("legacy", "global", "friends"):
+        raise ConfigError("schedule_mode 必须是 global 或 friends")
+    if task.schedule_mode == "friends" and any(t.schedule_enabled and not t.send_time for t in task.targets):
+        raise ConfigError("好友独立定时模式中，启用定时的好友必须设置发送时间")
     if not isinstance(task.continue_on_error, bool):
         raise ConfigError("continue_on_error 必须是布尔值")
     if not isinstance(task.prevent_duplicates, bool):
@@ -127,7 +151,12 @@ def _parse_target(raw: Any, index: int, config_dir: Path) -> Target:
     messages_raw = raw.get("messages")
     if not isinstance(messages_raw, list) or not messages_raw:
         raise ConfigError(f"{label}.messages 必须是非空数组")
-    return Target(name=name, messages=tuple(_parse_message(item, f"{label}.messages[{i}]", config_dir) for i, item in enumerate(messages_raw)))
+    send_time = normalize_send_time(raw["send_time"], f"{label}.send_time") if raw.get("send_time") else None
+    schedule_enabled = raw.get("schedule_enabled", True)
+    if not isinstance(schedule_enabled, bool):
+        raise ConfigError(f"{label}.schedule_enabled 必须是布尔值")
+    douyin_id = normalize_douyin_id(raw.get("douyin_id"), f"{label}.douyin_id")
+    return Target(name=name, messages=tuple(_parse_message(item, f"{label}.messages[{i}]", config_dir) for i, item in enumerate(messages_raw)), send_time=send_time, schedule_enabled=schedule_enabled, douyin_id=douyin_id)
 
 
 def _parse_message(raw: Any, label: str, config_dir: Path) -> Message:
@@ -176,11 +205,15 @@ def _parse_stickers(raw: dict[str, Any]) -> dict[str, Sticker]:
         fallback_index = item.get("fallback_index")
         if fallback_index is not None and (not isinstance(fallback_index, int) or fallback_index < 0):
             raise ConfigError(f"表情 {name} 的 fallback_index 必须是非负整数")
+        tab_index = item.get("tab_index")
+        if tab_index is not None and (not isinstance(tab_index, int) or tab_index < 0):
+            raise ConfigError(f"表情 {name} 的 tab_index 必须是非负整数")
         result[name] = Sticker(
             name=name,
             category=_optional_string(item.get("category")),
             accessible_name=_optional_string(item.get("accessible_name", item.get("label"))),
             fallback_index=fallback_index,
+            tab_index=tab_index,
         )
     return result
 

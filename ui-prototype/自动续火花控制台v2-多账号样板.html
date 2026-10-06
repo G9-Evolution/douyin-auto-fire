@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>自动续火花控制台 v2 · 多账号独立版（样板）</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23FE2C55'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='white'%3E%E7%BB%AD%3C/text%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#F5F6F8; --panel:#fff; --ink:#1B1B23; --ink-2:#5A5A66; --ink-3:#9A9AA6;
+  --line:#E7E8EE; --brand:#FE2C55; --brand-2:#25F4EE; --sidebar:#14141C;
+  --ok:#12B76A; --warn:#F79009; --bad:#E5484D; --radius:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:auto}
+body{font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px}
+.mono{font-family:Consolas,"Courier New",monospace;font-size:12px}
+/* ===== 布局 ===== */
+.app{display:grid;grid-template-columns:224px 1fr;min-height:100vh}
+.sidebar{background:var(--sidebar);color:#fff;display:flex;flex-direction:column;padding:20px 14px;gap:4px;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:10px;padding:2px 8px 16px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:12px}
+.brand-logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--brand),#FF6B85);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px}
+.brand b{font-size:15px;display:block}
+.brand span{font-size:11px;color:rgba(255,255,255,.5)}
+.nav-group{font-size:11px;color:rgba(255,255,255,.35);padding:10px 8px 4px;letter-spacing:1px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 8px;border-radius:8px;cursor:pointer;color:rgba(255,255,255,.75);font-size:13px;user-select:none}
+.nav-item svg{width:16px;height:16px;stroke:currentColor;flex:none}
+.nav-item:hover{background:rgba(255,255,255,.06)}
+.nav-item.active{background:var(--brand);color:#fff}
+.side-foot{margin-top:auto;padding:10px 8px;font-size:12px;color:rgba(255,255,255,.45);line-height:1.7}
+.side-foot .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ok);margin-right:6px}
+/* ===== 顶栏（含账号切换器） ===== */
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 24px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.top-title h1{font-size:18px;font-weight:700}
+.top-title p{font-size:12px;color:var(--ink-3);margin-top:2px}
+.account-switch{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.switch-box{position:relative}
+.switch-box select{appearance:none;-webkit-appearance:none;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 34px 8px 12px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink);outline:none}
+.switch-box::after{content:"";position:absolute;right:12px;top:50%;transform:translateY(-70%) rotate(45deg);width:7px;height:7px;border-right:2px solid var(--ink-3);border-bottom:2px solid var(--ink-3);pointer-events:none}
+.top-ops{display:flex;gap:8px;align-items:center}
+/* ===== 按钮 / 通用 ===== */
+.btn{display:inline-flex;align-items:center;gap:6px;border:none;border-radius:9px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;transition:.15s}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:var(--brand);color:#fff}
+.btn-primary:hover{background:#E2254A}
+.btn-ghost{background:#fff;border:1px solid var(--line);color:var(--ink-2)}
+.btn-ghost:hover{border-color:#c9cad4}
+.btn-danger{background:var(--bad);color:#fff}
+.btn-sm{padding:5px 10px;font-size:12px}
+.text-btn{background:none;border:none;color:var(--brand);font-size:12.5px;cursor:pointer;font-weight:600;padding:3px 4px}
+.text-btn.danger{color:var(--bad)}
+.tag-default{display:inline-block;background:#FFF0F4;color:var(--brand);font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:6px}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.pill .pd{width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill-ok{background:#E6F7EF;color:var(--ok)}
+.pill-warn{background:#FEF3E7;color:var(--warn)}
+.pill-gray{background:#F0F1F4;color:var(--ink-3)}
+.pill-red{background:#FDECEF;color:var(--brand)}
+.banner{display:flex;gap:10px;padding:12px 14px;border-radius:10px;font-size:13px;line-height:1.7;align-items:flex-start}
+.banner svg{width:18px;height:18px;stroke:currentColor;flex:none;margin-top:2px}
+.banner-info{background:#EAF7FF;color:#0B6FA8}
+.banner-warn{background:#FEF3E7;color:#B76A00}
+.banner-ok{background:#E6F7EF;color:#0C7A4D}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line)}
+.panel-title{font-size:14px;font-weight:700}
+.panel-sub{font-size:12px;color:var(--ink-3);margin-top:3px}
+.panel-body{padding:16px 18px}
+.main{padding:20px 24px 40px;display:flex;flex-direction:column;gap:16px;max-width:1180px}
+.view{display:none}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.page-title{font-size:18px;font-weight:700}
+.page-desc{font-size:12.5px;color:var(--ink-3);margin-top:3px;line-height:1.6}
+.head-actions{display:flex;gap:8px}
+/* ===== 卡片 ===== */
+.card-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.card .k{font-size:12px;color:var(--ink-3)}
+.card .v{font-size:24px;font-weight:800;margin-top:8px;letter-spacing:-.5px}
+.card .s{font-size:12px;color:var(--ink-3);margin-top:6px}
+.account-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.account-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.account-card .top{display:flex;gap:12px;align-items:center}
+.avatar{width:44px;height:44px;border-radius:50%;background:#EFF0F3;color:var(--ink-2);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700}
+.avatar.on{background:linear-gradient(135deg,var(--brand),#FF6B85);color:#fff}
+.nick{font-size:14.5px;font-weight:700}
+.meta{font-size:12px;color:var(--ink-3);display:flex;gap:8px;flex-wrap:wrap}
+.ops{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.ops .right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.switch{position:relative;display:inline-block;width:34px;height:20px}
+.switch input{opacity:0;width:0;height:0}
+.switch .track{position:absolute;inset:0;border-radius:20px;background:#D8DAE0;transition:.2s}
+.switch input:checked + .track{background:var(--brand)}
+.switch .thumb{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.2s}
+.switch input:checked + .track + .thumb{left:16px}
+/* ===== 表格 ===== */
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+th{font-size:12px;color:var(--ink-3);font-weight:600;text-align:left;padding:10px 18px;border-bottom:1px solid var(--line);background:#FAFAFC}
+td{padding:12px 18px;border-bottom:1px solid #F2F3F6;font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.row-actions{display:flex;gap:10px;justify-content:flex-end}
+.name{font-weight:600}
+.sub{font-size:11.5px;color:var(--ink-3);margin-top:2px}
+.empty{padding:28px 18px;text-align:center;color:var(--ink-3);font-size:13px}
+/* ===== 消息项 ===== */
+.msg-list{display:flex;flex-direction:column;gap:8px}
+.msg-item{display:flex;align-items:center;gap:10px;background:#FAFAFC;border:1px solid #EEEFF3;border-radius:9px;padding:9px 12px}
+.msg-item .content{flex:1;font-size:13px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.type-tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:5px;flex:none}
+.tt-text{background:#EAF3FF;color:#1D6FD8}
+.tt-random{background:#F3EBFF;color:#7C3AED}
+.tt-sticker{background:#FFF0D9;color:#D97706}
+.tt-image{background:#E6F7EF;color:#0C7A4D}
+.icon-btn{background:none;border:none;color:var(--ink-3);cursor:pointer;padding:4px;border-radius:6px;display:flex}
+.icon-btn:hover{background:#F0F1F4;color:var(--ink)}
+.icon-btn.danger:hover{background:#FDECEF;color:var(--bad)}
+.icon-btn svg{width:15px;height:15px;stroke:currentColor}
+/* ===== 弹窗 ===== */
+.modal-mask{position:fixed;inset:0;background:rgba(10,10,18,.45);display:none;align-items:flex-start;justify-content:center;padding:60px 16px;z-index:50;overflow-y:auto}
+.modal-mask.open{display:flex}
+.modal{background:#fff;border-radius:14px;max-width:560px;width:100%;overflow:hidden;box-shadow:0 18px 60px rgba(0,0,0,.18)}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line)}
+.modal-head b{font-size:15px}
+.modal-close{background:none;border:none;font-size:20px;color:var(--ink-3);cursor:pointer;padding:0 4px}
+.modal-body{padding:18px 20px;max-height:60vh;overflow-y:auto}
+.modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 20px;border-top:1px solid var(--line);background:#FAFAFC}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;font-weight:600;margin-bottom:6px}
+.input{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 12px;font-size:13px;outline:none;background:#fff;font-family:inherit}
+.input:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(254,44,85,.1)}
+textarea.input{resize:vertical;line-height:1.6}
+.hint{font-size:11.5px;color:var(--ink-3);margin-top:5px;line-height:1.6}
+/* ===== 表情选择器 ===== */
+.sticker-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px}
+.sticker-cell{display:flex;flex-direction:column;align-items:center;gap:3px;border:1px solid var(--line);border-radius:9px;padding:8px 4px;cursor:pointer;background:#fff;transition:.15s;font-size:11px;color:var(--ink-3)}
+.sticker-cell:hover{border-color:var(--brand);background:#FFF8FA}
+.sticker-cell.sel{border-color:var(--brand);background:#FDECEF}
+.sticker-cell .emoji{font-size:22px;line-height:1.2}
+.sticker-add{border-style:dashed;color:var(--ink-3)}
+.sticker-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.sticker-tab{font-size:12px;font-weight:600;padding:4px 12px;border-radius:16px;background:#F0F1F4;color:var(--ink-2);cursor:pointer}
+.sticker-tab.sel{background:var(--brand);color:#fff}
+.sticker-cell img{width:34px;height:34px;object-fit:contain}
+/* ===== 定时 ===== */
+.sched-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.info-item{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+.info-item .k{font-size:12px;color:var(--ink-3)}
+.info-item .v{font-size:14px;font-weight:700;margin-top:6px;word-break:break-all}
+.info-item .s{font-size:11.5px;color:var(--ink-3);margin-top:4px}
+/* ===== 页脚提示 ===== */
+.foot-tips{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--ink-3);padding-top:6px}
+.foot-tips b{font-weight:600}
+/* ===== 响应式 ===== */
+@media(max-width:1024px){.card-grid{grid-template-columns:1fr 1fr}.account-grid{grid-template-columns:1fr}.sched-grid,.info-grid{grid-template-columns:1fr}}
+@media(max-width:760px){
+  .app{grid-template-columns:1fr}
+  .sidebar{position:static;height:auto;flex-direction:row;flex-wrap:wrap;gap:6px;padding:12px}
+  .brand{width:100%;border-bottom:none;padding-bottom:8px}
+  .nav-group{display:none}
+  .nav-item{padding:7px 10px;font-size:12px}
+  .side-foot{display:none}
+  .card-grid{grid-template-columns:1fr 1fr}
+  .main{padding:14px 14px 30px}
+  .topbar{margin:0!important;border-radius:12px;padding:12px 14px}
+  .account-switch{width:100%;justify-content:space-between}
+  .switch-box{flex:1;min-width:0}
+  .switch-box select{width:100%;max-width:220px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== 侧边栏 ===== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-logo">续</div>
+      <div><b>自动续火花</b><span>抖音消息 · 本地控制台</span></div>
+    </div>
+    <div class="nav-group">管理</div>
+    <div class="nav-item active" data-view="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13h8V3H3zM13 21h8V11h-8zM13 3v6h8V3zM3 21h8v-6H3z"/></svg>总览</div>
+    <div class="nav-item" data-view="accounts"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.5 3.6-5.5 7-5.5s6.2 2 7 5.5"/></svg>账号管理</div>
+    <div class="nav-group">当前账号</div>
+    <div class="nav-item" data-view="friends"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>续火花好友</div>
+    <div class="nav-item" data-view="messages"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>发送内容</div>
+    <div class="nav-item" data-view="schedule"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>定时计划</div>
+    <div class="nav-item" data-view="logs"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>运行记录</div>
+    <div class="nav-group">全局</div>
+    <div class="nav-item" data-view="notify"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg>通知设置</div>
+    <div class="side-foot"><span class="dot"></span>本地服务运行中<br>凭证与本机配置不外传</div>
+  </aside>
+
+  <!-- ===== 主区 ===== -->
+  <main class="main">
+    <!-- 顶栏 -->
+    <div class="topbar" style="margin:-20px -24px 0;border-radius:0">
+      <div class="top-title"><h1>自动续火花控制台</h1><p>当前操作作用于下方选中的账号，各账号互不干扰</p></div>
+      <div class="account-switch">
+        <div class="switch-box">
+          <select id="cur-account">
+            <option value="account1">Og · account1</option>
+            <option value="account2">小顾 · account2</option>
+            <option value="default">默认账号</option>
+          </select>
+        </div>
+        <div class="top-ops">
+          <button class="btn btn-ghost" id="btn-dryrun">试运行</button>
+          <button class="btn btn-primary" id="btn-runnow">立即发送</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 视图：总览（当前账号） ===== -->
+    <section id="view-dashboard" class="view">
+      <div class="page-head">
+        <div>
+          <div class="page-title">总览</div>
+          <div class="page-desc">账号 <b id="ov-acc"></b> 的运行状态一览（各账号独立统计）。</div>
+        </div>
+      </div>
+      <div class="card-grid" id="ov-cards"></div>
+      <div class="panel">
+        <div class="panel-head">
+          <div><div class="panel-title">最近发送记录</div><div class="panel-sub">账号 <span id="ov-acc2"></span> 的记录 · 演示数据</div></div>
+        </div>
+        <div class="panel-body" id="ov-recent" style="padding:0"></div>
+      </div>
+    </section>
+
+    <!-- ===== 视图：账号管理 ===== -->
+    <section id="view-accounts" class="view">
+      <div class="page-head">
+        <div>
+          <div class="page-title">账号管理</div>
+          <div class="page-desc">每个账号独立：登录凭证、任务配置（好友/内容/定时）、运行记录。</div>
+        </div>
+        <div class="head-actions"><button class="btn btn-primary" id="btn-add-account">+ 添加账号</button></div>
+      </div>
+      <div class="banner banner-info"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg><div><b>v2 多账号独立模式</b>：每个账号拥有自己的好友名单、发送内容、定时时间与运行记录（<span class="mono">config/tasks/account&lt;id&gt;.json</span> + 独立计划任务 <span class="mono">DouyinAutoFire-&lt;id&gt;</span>）。停用的账号不参与发送。</div></div>
+      <div class="account-grid" id="acc-list"></div>
+    </section>
+
+    <!-- ===== 视图：续火花好友（当前账号） ===== -->
+    <section id="view-friends" class="view">
+      <div class="page-head">
+        <div>
+          <div class="page-title">续火花好友</div>
+          <div class="page-desc">当前账号「<span id="fr-acc"></span>」的好友名单，与其他账号完全独立。</div>
+        </div>
+        <div class="head-actions"><button class="btn btn-primary" id="btn-add-friend">+ 添加好友</button></div>
+      </div>
+      <div class="banner banner-warn"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg><div>好友名请填写抖音私信列表中显示的<b>备注名</b>。保存时写入该账号自己的 <span class="mono">config/tasks/account&lt;id&gt;.json</span>。</div></div>
+      <div class="panel">
+        <div class="panel-head"><div><div class="panel-title">好友名单</div><div class="panel-sub" id="fr-count"></div></div></div>
+        <div class="panel-body" id="fr-table" style="padding:0"></div>
+      </div>
+    </section>
+
+    <!-- ===== 视图：发送内容（当前账号） ===== -->
+    <section id="view-messages" class="view">
+      <div class="page-head">
+        <div>
+          <div class="page-title">发送内容</div>
+          <div class="page-desc">当前账号「<span id="ms-acc"></span>」的全局消息与好友单独设置。支持文字、随机、抖音表情、动图。</div>
+        </div>
+        <div class="head-actions"><button class="btn btn-primary" id="btn-save-msgs">保存内容</button></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <div><div class="panel-title">全局默认消息</div><div class="panel-sub">该账号所有「沿用全局」的好友使用以下列表</div></div>
+          <button class="btn btn-ghost btn-sm" id="btn-add-global">+ 添加消息</button>
+        </div>
+        <div class="panel-body"><div class="msg-list" id="global-msgs"></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div><div class="panel-title">好友单独设置</div><div class="panel-sub">单独设置后该好友使用自己的消息列表</div></div></div>
+        <div class="panel-body" id="friend-msg-table" style="padding:0"></div>
+      </div>
+    </section>
+
+    <!-- ===== 视图：定时计划（当前账号） ===== -->
+    <section id="view-schedule" class="view">
+      <div class="page-head">
+        <div>
+          <div class="page-title">定时计划</div>
+          <div class="page-desc">当前账号「<span id="sc-acc"></span>」的独立计划任务 <span class="mono" id="sc-task"></span>。</div>
+        </div>
+        <div class="head-actions"><button class="btn btn-primary" id="btn-save-sched">保存计划</button></div>
+      </div>
+      <div class="sched-grid" id="sc-info"></div>
+      <div class="panel">
+        <div class="panel-head"><div><div class="panel-title">自动化参数</div><div class="panel-sub">写入该账号的任务配置，对定时与手动运行均生效</div></div></div>
+        <div class="panel-body" id="sc-params"></div>
+      </div>
+    </section>
+
+    <!-- ===== 视图：运行记录（当前账号） ===== -->
+    <section id="view-logs" class="view">
+      <div class="page-head">
+        <div>
+          <div class="page-title">运行记录</div>
+          <div class="page-desc">当前账号「<span id="lg-acc"></span>」的历史发送与运行日志。</div>
+        </div>
+        <div class="head-actions"><button class="btn btn-ghost" id="btn-refresh-logs">刷新</button></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div><div class="panel-title">发送历史</div><div class="panel-sub" id="lg-count"></div></div></div>
+        <div class="panel-body" id="lg-table" style="padding:0"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div><div class="panel-title">最近日志尾部</div></div></div>
+        <div class="panel-body"><pre class="mono" id="lg-tail" style="font-size:11.5px;line-height:1.7;white-space:pre-wrap;color:var(--ink-2)"></pre></div>
+      </div>
+    </section>
+
+    <!-- ===== 视图：通知设置（全局） ===== -->
+    <section id="view-notify" class="view">
+      <div class="page-head">
+        <div><div class="page-title">通知设置</div><div class="page-desc">全局配置：所有账号共用一套通知渠道。</div></div>
+      </div>
+      <div class="banner banner-info"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg><div>钉钉机器人与通用 Webhook（演示状态）。正式版初版行为不变。</div></div>
+      <div class="panel"><div class="panel-body" style="color:var(--ink-3);font-size:13px">钉钉 / Webhook 配置区（沿用正式版初版）</div></div>
+    </section>
+  </main>
+</div>
+
+<!-- ===== 弹窗 ===== -->
+<div class="modal-mask" id="modal-mask">
+  <div class="modal">
+    <div class="modal-head"><b id="modal-title"></b><button class="modal-close" id="modal-close">×</button></div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-foot" id="modal-foot"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   样板 · 演示数据（非正式版）
+   数据模型（v2 目标）：
+   - config/accounts.json                    账号列表
+   - config/tasks/account<id>.json           每账号独立任务配置
+   - .env.account<id>  → TASK_CONFIG        每账号指向自己的任务配置
+   - 计划任务 DouyinAutoFire-<id>            每账号独立定时
+   ============================================================ */
+var ACCOUNTS = [
+  {id:'account1', label:'Og',     enabled:true,  is_default:false, logged_in:true,  storage_mtime:'2026-09-30 00:24', task:'config/tasks/account1.json', sched:'DouyinAutoFire-account1', time:'08:00', friend_count:2},
+  {id:'account2', label:'小顾',   enabled:true,  is_default:false, logged_in:true,  storage_mtime:'2026-09-30 00:12', task:'config/tasks/account2.json', sched:'DouyinAutoFire-account2', time:'17:20', friend_count:1},
+  {id:'default',  label:'默认账号', enabled:true, is_default:true, logged_in:true,  storage_mtime:'2026-09-29 22:10', task:'config.json',               sched:'DouyinAutoFire',          time:'17:20', friend_count:1}
+];
+var STICKER_CATS = [
+  {key:'常用', tab_index:0, items:[
+    {name:'续火花', img:'../assets/stickers/分类1-000.webp'},
+    {name:'比心', img:'../assets/stickers/分类1-001.webp'},
+    {name:'桂兔绣月', img:'../assets/stickers/分类1-002.webp'},
+    {name:'礼敬山河', img:'../assets/stickers/分类1-003.webp'},
+    {name:'在干嘛', img:'../assets/stickers/分类1-004.webp'},
+    {name:'笑死', img:'../assets/stickers/分类1-005.webp'},
+    {name:'麻了', img:'../assets/stickers/分类1-006.webp'},
+    {name:'躺平', img:'../assets/stickers/分类1-007.webp'},
+    {name:'摇骰子', img:'../assets/stickers/分类1-008.webp'},
+    {name:'猜拳', img:'../assets/stickers/分类1-009.webp'},
+    {name:'开心', img:'../assets/stickers/分类1-010.webp'},
+    {name:'嗨', img:'../assets/stickers/分类1-011.webp'},
+    {name:'吹泡泡', img:'../assets/stickers/分类1-012.webp'},
+    {name:'黑人问号', img:'../assets/stickers/分类1-013.webp'},
+    {name:'早上好', img:'../assets/stickers/分类1-014.webp'},
+    {name:'晚上好', img:'../assets/stickers/分类1-015.webp'},
+    {name:'早点睡', img:'../assets/stickers/分类1-016.webp'},
+    {name:'爱心', img:'../assets/stickers/分类1-017.webp'},
+    {name:'便便', img:'../assets/stickers/分类1-018.webp'},
+    {name:'戳一戳', img:'../assets/stickers/分类1-019.webp'},
+    {name:'绝了', img:'../assets/stickers/分类1-020.webp'},
+    {name:'已阅', img:'../assets/stickers/分类1-021.webp'},
+    {name:'生日祝福', img:'../assets/stickers/分类1-022.webp'}
+  ]},
+  {key:'贴纸A', tab_index:2, items:[
+    {name:'贴纸A-1', img:'../assets/stickers/分类3-000.webp'},
+    {name:'贴纸A-2', img:'../assets/stickers/分类3-001.webp'},
+    {name:'贴纸A-3', img:'../assets/stickers/分类3-002.webp'},
+    {name:'贴纸A-4', img:'../assets/stickers/分类3-003.webp'},
+    {name:'贴纸A-5', img:'../assets/stickers/分类3-004.webp'},
+    {name:'贴纸A-6', img:'../assets/stickers/分类3-005.webp'},
+    {name:'贴纸A-7', img:'../assets/stickers/分类3-006.webp'},
+    {name:'贴纸A-8', img:'../assets/stickers/分类3-007.webp'},
+    {name:'贴纸A-9', img:'../assets/stickers/分类3-008.webp'},
+    {name:'贴纸A-10', img:'../assets/stickers/分类3-009.webp'},
+    {name:'贴纸A-11', img:'../assets/stickers/分类3-010.webp'},
+    {name:'贴纸A-12', img:'../assets/stickers/分类3-011.webp'},
+    {name:'贴纸A-13', img:'../assets/stickers/分类3-012.webp'},
+    {name:'贴纸A-14', img:'../assets/stickers/分类3-013.webp'},
+    {name:'贴纸A-15', img:'../assets/stickers/分类3-014.webp'},
+    {name:'贴纸A-16', img:'../assets/stickers/分类3-015.webp'},
+    {name:'贴纸A-17', img:'../assets/stickers/分类3-016.webp'},
+    {name:'贴纸A-18', img:'../assets/stickers/分类3-017.webp'},
+    {name:'贴纸A-19', img:'../assets/stickers/分类3-018.webp'},
+    {name:'贴纸A-20', img:'../assets/stickers/分类3-019.webp'},
+    {name:'贴纸A-21', img:'../assets/stickers/分类3-020.webp'},
+    {name:'贴纸A-22', img:'../assets/stickers/分类3-021.webp'},
+    {name:'贴纸A-23', img:'../assets/stickers/分类3-022.webp'},
+    {name:'贴纸A-24', img:'../assets/stickers/分类3-023.webp'},
+    {name:'贴纸A-25', img:'../assets/stickers/分类3-024.webp'},
+    {name:'贴纸A-26', img:'../assets/stickers/分类3-025.webp'},
+    {name:'贴纸A-27', img:'../assets/stickers/分类3-026.webp'},
+    {name:'贴纸A-28', img:'../assets/stickers/分类3-027.webp'},
+    {name:'贴纸A-29', img:'../assets/stickers/分类3-028.webp'},
+    {name:'贴纸A-30', img:'../assets/stickers/分类3-029.webp'},
+    {name:'贴纸A-31', img:'../assets/stickers/分类3-030.webp'},
+    {name:'贴纸A-32', img:'../assets/stickers/分类3-031.webp'},
+    {name:'贴纸A-33', img:'../assets/stickers/分类3-032.webp'},
+    {name:'贴纸A-34', img:'../assets/stickers/分类3-033.webp'},
+    {name:'贴纸A-35', img:'../assets/stickers/分类3-034.webp'},
+    {name:'贴纸A-36', img:'../assets/stickers/分类3-035.webp'},
+    {name:'贴纸A-37', img:'../assets/stickers/分类3-036.webp'},
+    {name:'贴纸A-38', img:'../assets/stickers/分类3-037.webp'},
+    {name:'贴纸A-39', img:'../assets/stickers/分类3-038.webp'},
+    {name:'贴纸A-40', img:'../assets/stickers/分类3-039.webp'},
+    {name:'贴纸A-41', img:'../assets/stickers/分类3-040.webp'},
+    {name:'贴纸A-42', img:'../assets/stickers/分类3-041.webp'},
+    {name:'贴纸A-43', img:'../assets/stickers/分类3-042.webp'},
+    {name:'贴纸A-44', img:'../assets/stickers/分类3-043.webp'},
+    {name:'贴纸A-45', img:'../assets/stickers/分类3-044.webp'},
+    {name:'贴纸A-46', img:'../assets/stickers/分类3-045.webp'},
+    {name:'贴纸A-47', img:'../assets/stickers/分类3-046.webp'},
+    {name:'贴纸A-48', img:'../assets/stickers/分类3-047.webp'},
+    {name:'贴纸A-49', img:'../assets/stickers/分类3-048.webp'},
+    {name:'贴纸A-50', img:'../assets/stickers/分类3-049.webp'},
+    {name:'贴纸A-201', img:'../assets/stickers/分类3-200.webp'},
+    {name:'贴纸A-202', img:'../assets/stickers/分类3-201.webp'},
+    {name:'贴纸A-203', img:'../assets/stickers/分类3-202.webp'},
+    {name:'贴纸A-204', img:'../assets/stickers/分类3-203.webp'},
+    {name:'贴纸A-205', img:'../assets/stickers/分类3-204.webp'},
+    {name:'贴纸A-206', img:'../assets/stickers/分类3-205.webp'},
+    {name:'贴纸A-207', img:'../assets/stickers/分类3-206.webp'},
+    {name:'贴纸A-208', img:'../assets/stickers/分类3-207.webp'},
+    {name:'贴纸A-209', img:'../assets/stickers/分类3-208.webp'},
+    {name:'贴纸A-210', img:'../assets/stickers/分类3-209.webp'},
+    {name:'贴纸A-211', img:'../assets/stickers/分类3-210.webp'},
+    {name:'贴纸A-212', img:'../assets/stickers/分类3-211.webp'},
+    {name:'贴纸A-213', img:'../assets/stickers/分类3-212.webp'},
+    {name:'贴纸A-214', img:'../assets/stickers/分类3-213.webp'},
+    {name:'贴纸A-215', img:'../assets/stickers/分类3-214.webp'},
+    {name:'贴纸A-216', img:'../assets/stickers/分类3-215.webp'},
+    {name:'贴纸A-217', img:'../assets/stickers/分类3-216.webp'},
+    {name:'贴纸A-218', img:'../assets/stickers/分类3-217.webp'},
+    {name:'贴纸A-219', img:'../assets/stickers/分类3-218.webp'},
+    {name:'贴纸A-220', img:'../assets/stickers/分类3-219.webp'},
+    {name:'贴纸A-221', img:'../assets/stickers/分类3-220.webp'},
+    {name:'贴纸A-222', img:'../assets/stickers/分类3-221.webp'},
+    {name:'贴纸A-223', img:'../assets/stickers/分类3-222.webp'},
+    {name:'贴纸A-224', img:'../assets/stickers/分类3-223.webp'},
+    {name:'贴纸A-225', img:'../assets/stickers/分类3-224.webp'},
+    {name:'贴纸A-226', img:'../assets/stickers/分类3-225.webp'},
+    {name:'贴纸A-227', img:'../assets/stickers/分类3-226.webp'},
+    {name:'贴纸A-228', img:'../assets/stickers/分类3-227.webp'},
+    {name:'贴纸A-229', img:'../assets/stickers/分类3-228.webp'},
+    {name:'贴纸A-230', img:'../assets/stickers/分类3-229.webp'},
+    {name:'贴纸A-231', img:'../assets/stickers/分类3-230.webp'},
+    {name:'贴纸A-232', img:'../assets/stickers/分类3-231.webp'},
+    {name:'贴纸A-233', img:'../assets/stickers/分类3-232.webp'},
+    {name:'贴纸A-234', img:'../assets/stickers/分类3-233.webp'},
+    {name:'贴纸A-235', img:'../assets/stickers/分类3-234.webp'},
+    {name:'贴纸A-236', img:'../assets/stickers/分类3-235.webp'},
+    {name:'贴纸A-237', img:'../assets/stickers/分类3-236.webp'},
+    {name:'贴纸A-238', img:'../assets/stickers/分类3-237.webp'},
+    {name:'贴纸A-239', img:'../assets/stickers/分类3-238.webp'},
+    {name:'贴纸A-240', img:'../assets/stickers/分类3-239.webp'},
+    {name:'贴纸A-241', img:'../assets/stickers/分类3-240.webp'},
+    {name:'贴纸A-242', img:'../assets/stickers/分类3-241.webp'},
+    {name:'贴纸A-243', img:'../assets/stickers/分类3-242.webp'},
+    {name:'贴纸A-244', img:'../assets/stickers/分类3-243.webp'},
+    {name:'贴纸A-245', img:'../assets/stickers/分类3-244.webp'},
+    {name:'贴纸A-246', img:'../assets/stickers/分类3-245.webp'},
+    {name:'贴纸A-247', img:'../assets/stickers/分类3-246.webp'},
+    {name:'贴纸A-248', img:'../assets/stickers/分类3-247.webp'},
+    {name:'贴纸A-249', img:'../assets/stickers/分类3-248.webp'},
+    {name:'贴纸A-250', img:'../assets/stickers/分类3-249.webp'},
+    {name:'贴纸A-651', img:'../assets/stickers/分类3-650.webp'},
+    {name:'贴纸A-652', img:'../assets/stickers/分类3-651.webp'},
+    {name:'贴纸A-653', img:'../assets/stickers/分类3-652.webp'},
+    {name:'贴纸A-654', img:'../assets/stickers/分类3-653.webp'},
+    {name:'贴纸A-655', img:'../assets/stickers/分类3-654.webp'},
+    {name:'贴纸A-656', img:'../assets/stickers/分类3-655.webp'},
+    {name:'贴纸A-657', img:'../assets/stickers/分类3-656.webp'},
+    {name:'贴纸A-658', img:'../assets/stickers/分类3-657.webp'},
+    {name:'贴纸A-659', img:'../assets/stickers/分类3-658.webp'},
+    {name:'贴纸A-660', img:'../assets/stickers/分类3-659.webp'},
+    {name:'贴纸A-661', img:'../assets/stickers/分类3-660.webp'},
+    {name:'贴纸A-662', img:'../assets/stickers/分类3-661.webp'},
+    {name:'贴纸A-663', img:'../assets/stickers/分类3-662.webp'},
+    {name:'贴纸A-664', img:'../assets/stickers/分类3-663.webp'},
+    {name:'贴纸A-665', img:'../assets/stickers/分类3-664.webp'},
+    {name:'贴纸A-666', img:'../assets/stickers/分类3-665.webp'},
+    {name:'贴纸A-667', img:'../assets/stickers/分类3-666.webp'},
+    {name:'贴纸A-668', img:'../assets/stickers/分类3-667.webp'},
+    {name:'贴纸A-669', img:'../assets/stickers/分类3-668.webp'},
+    {name:'贴纸A-670', img:'../assets/stickers/分类3-669.webp'},
+    {name:'贴纸A-671', img:'../assets/stickers/分类3-670.webp'},
+    {name:'贴纸A-672', img:'../assets/stickers/分类3-671.webp'},
+    {name:'贴纸A-673', img:'../assets/stickers/分类3-672.webp'},
+    {name:'贴纸A-674', img:'../assets/stickers/分类3-673.webp'},
+    {name:'贴纸A-675', img:'../assets/stickers/分类3-674.webp'},
+    {name:'贴纸A-676', img:'../assets/stickers/分类3-675.webp'},
+    {name:'贴纸A-677', img:'../assets/stickers/分类3-676.webp'},
+    {name:'贴纸A-678', img:'../assets/stickers/分类3-677.webp'},
+    {name:'贴纸A-679', img:'../assets/stickers/分类3-678.webp'},
+    {name:'贴纸A-680', img:'../assets/stickers/分类3-679.webp'},
+    {name:'贴纸A-681', img:'../assets/stickers/分类3-680.webp'},
+    {name:'贴纸A-682', img:'../assets/stickers/分类3-681.webp'},
+    {name:'贴纸A-683', img:'../assets/stickers/分类3-682.webp'},
+    {name:'贴纸A-684', img:'../assets/stickers/分类3-683.webp'},
+    {name:'贴纸A-685', img:'../assets/stickers/分类3-684.webp'},
+    {name:'贴纸A-686', img:'../assets/stickers/分类3-685.webp'}
+  ]},
+  {key:'贴纸B', tab_index:3, items:[
+    {name:'贴纸B-1', img:'../assets/stickers/分类4-000.webp'},
+    {name:'贴纸B-2', img:'../assets/stickers/分类4-001.webp'},
+    {name:'贴纸B-3', img:'../assets/stickers/分类4-002.webp'},
+    {name:'贴纸B-4', img:'../assets/stickers/分类4-003.webp'},
+    {name:'贴纸B-5', img:'../assets/stickers/分类4-004.webp'},
+    {name:'贴纸B-6', img:'../assets/stickers/分类4-005.webp'},
+    {name:'贴纸B-7', img:'../assets/stickers/分类4-006.webp'},
+    {name:'贴纸B-8', img:'../assets/stickers/分类4-007.webp'},
+    {name:'贴纸B-9', img:'../assets/stickers/分类4-008.webp'},
+    {name:'贴纸B-10', img:'../assets/stickers/分类4-009.webp'},
+    {name:'贴纸B-11', img:'../assets/stickers/分类4-010.webp'},
+    {name:'贴纸B-12', img:'../assets/stickers/分类4-011.webp'},
+    {name:'贴纸B-13', img:'../assets/stickers/分类4-012.webp'},
+    {name:'贴纸B-14', img:'../assets/stickers/分类4-013.webp'},
+    {name:'贴纸B-15', img:'../assets/stickers/分类4-014.webp'},
+    {name:'贴纸B-16', img:'../assets/stickers/分类4-015.webp'},
+    {name:'贴纸B-17', img:'../assets/stickers/分类4-016.webp'},
+    {name:'贴纸B-18', img:'../assets/stickers/分类4-017.webp'},
+    {name:'贴纸B-19', img:'../assets/stickers/分类4-018.webp'},
+    {name:'贴纸B-20', img:'../assets/stickers/分类4-019.webp'},
+    {name:'贴纸B-21', img:'../assets/stickers/分类4-020.webp'},
+    {name:'贴纸B-22', img:'../assets/stickers/分类4-021.webp'},
+    {name:'贴纸B-23', img:'../assets/stickers/分类4-022.webp'},
+    {name:'贴纸B-24', img:'../assets/stickers/分类4-023.webp'},
+    {name:'贴纸B-25', img:'../assets/stickers/分类4-024.webp'},
+    {name:'贴纸B-26', img:'../assets/stickers/分类4-025.webp'},
+    {name:'贴纸B-27', img:'../assets/stickers/分类4-026.webp'},
+    {name:'贴纸B-28', img:'../assets/stickers/分类4-027.webp'},
+    {name:'贴纸B-29', img:'../assets/stickers/分类4-028.webp'},
+    {name:'贴纸B-30', img:'../assets/stickers/分类4-029.webp'},
+    {name:'贴纸B-31', img:'../assets/stickers/分类4-030.webp'},
+    {name:'贴纸B-32', img:'../assets/stickers/分类4-031.webp'},
+    {name:'贴纸B-33', img:'../assets/stickers/分类4-032.webp'},
+    {name:'贴纸B-34', img:'../assets/stickers/分类4-033.webp'},
+    {name:'贴纸B-35', img:'../assets/stickers/分类4-034.webp'},
+    {name:'贴纸B-36', img:'../assets/stickers/分类4-035.webp'},
+    {name:'贴纸B-37', img:'../assets/stickers/分类4-036.webp'},
+    {name:'贴纸B-38', img:'../assets/stickers/分类4-037.webp'},
+    {name:'贴纸B-39', img:'../assets/stickers/分类4-038.webp'},
+    {name:'贴纸B-40', img:'../assets/stickers/分类4-039.webp'},
+    {name:'贴纸B-41', img:'../assets/stickers/分类4-040.webp'},
+    {name:'贴纸B-42', img:'../assets/stickers/分类4-041.webp'},
+    {name:'贴纸B-43', img:'../assets/stickers/分类4-042.webp'},
+    {name:'贴纸B-44', img:'../assets/stickers/分类4-043.webp'},
+    {name:'贴纸B-45', img:'../assets/stickers/分类4-044.webp'},
+    {name:'贴纸B-46', img:'../assets/stickers/分类4-045.webp'},
+    {name:'贴纸B-47', img:'../assets/stickers/分类4-046.webp'},
+    {name:'贴纸B-48', img:'../assets/stickers/分类4-047.webp'},
+    {name:'贴纸B-49', img:'../assets/stickers/分类4-048.webp'},
+    {name:'贴纸B-50', img:'../assets/stickers/分类4-049.webp'}
+  ]}
+];
+var STICKERS = STICKER_CATS.reduce(function(a, c){ return a.concat(c.items); }, []);
+/* 每账号独立的好友/消息/定时（演示） */
+var TASKS = {
+  account1: {targets:[{name:'朋友A', messages:[{type:'text',content:'早呀'}]}], interval:{min:3,max:8}, prevent:true},
+  account2: {targets:[{name:'小顾', messages:[{type:'text',content:'老婆~~~~~'},{type:'douyin_sticker',sticker:'比心'}]}], interval:{min:3,max:8}, prevent:true},
+  default:  {targets:[{name:'小顾', messages:[{type:'text',content:'mm'}]}], interval:{min:3,max:8}, prevent:true}
+};
+var curId = 'account1';
+var VIEWS = ['dashboard','accounts','friends','messages','schedule','logs','notify'];
+
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function cur(){ return ACCOUNTS.find(function(a){ return a.id===curId; }); }
+function curTask(){ return TASKS[curId]; }
+
+/* ---------- 账号切换 ---------- */
+document.getElementById('cur-account').addEventListener('change', function(){
+  curId = this.value;
+  toast('已切换到账号 ' + (cur().label || curId));
+  renderAll();
+});
+function renderAll(){ VIEWS.forEach(goView); }
+function goView(v){
+  VIEWS.forEach(function(x){
+    var el=document.getElementById('view-'+x); if(el) el.style.display=(x===v)?'block':'none';
+  });
+  document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.toggle('active', n.dataset.view===v); });
+  if(v==='dashboard') renderDashboard();
+  if(v==='accounts') renderAccounts();
+  if(v==='friends') renderFriends();
+  if(v==='messages') renderMessages();
+  if(v==='schedule') renderSchedule();
+  if(v==='logs') renderLogs();
+}
+document.querySelectorAll('.nav-item').forEach(function(n){ n.addEventListener('click', function(){ goView(n.dataset.view); }); });
+
+/* ---------- 总览 ---------- */
+function renderDashboard(){
+  var a=cur(), t=curTask();
+  document.getElementById('ov-acc').textContent = a.label + '（' + a.id + '）';
+  document.getElementById('ov-acc2').textContent = a.label;
+  var last = a.id==='account1' ? '07:58 发往 朋友A' : (a.id==='account2' ? '17:19 发往 小顾' : '22:13 发往 小顾');
+  document.getElementById('ov-cards').innerHTML =
+    '<div class="card"><div class="k">当前账号</div><div class="v">' + esc(a.label) + '</div><div class="s">' + esc(a.id) + (a.is_default?' · 默认': '') + '</div></div>' +
+    '<div class="card"><div class="k">续火花好友</div><div class="v">' + t.targets.length + '</div><div class="s">每日自动发送</div></div>' +
+    '<div class="card"><div class="k">下次运行</div><div class="v" style="font-size:17px">' + (a.id==='account1'?'明天 08:00':'明天 17:20') + '</div><div class="s">每天' + a.time + ' 定时</div></div>' +
+    '<div class="card"><div class="k">今日状态</div><div class="v" style="font-size:17px">已发送</div><div class="s">' + last + '</div></div>';
+  document.getElementById('ov-recent').innerHTML =
+    '<table><colgroup><col style="width:38%"><col style="width:34%"><col style="width:28%"></colgroup><thead><tr><th>时间</th><th>好友</th><th>结果</th></tr></thead><tbody>' +
+    '<tr><td>2026-09-30 ' + (a.id==='account1'?'07:58':'17:19') + '</td><td>' + (a.id==='account1'?'朋友A':'小顾') + '</td><td><span class="pill pill-ok"><span class="pd"></span>成功</span></td></tr>' +
+    '<tr><td>2026-09-29 ' + (a.id==='account1'?'08:01':'17:20') + '</td><td>' + (a.id==='account1'?'朋友A':'小顾') + '</td><td><span class="pill pill-ok"><span class="pd"></span>成功</span></td></tr>' +
+    '</tbody></table>';
+}
+
+/* ---------- 账号管理 ---------- */
+function renderAccounts(){
+  document.getElementById('acc-list').innerHTML = ACCOUNTS.map(function(a){
+    var pill = a.logged_in ? '<span class="pill pill-ok"><span class="pd"></span>登录有效</span>' : '<span class="pill pill-warn"><span class="pd"></span>未登录</span>';
+    var ops = '<label class="switch"><input type="checkbox"' + (a.enabled?' checked':'') + '><span class="track"></span><span class="thumb"></span></label>';
+    if(!a.is_default) ops += '<button class="text-btn">设为默认</button>';
+    ops += '<button class="text-btn">重新登录</button><button class="text-btn danger">删除</button>';
+    return '<div class="account-card"><div class="top"><div class="avatar' + (a.logged_in?' on':'') + '">' + esc((a.label||a.id).slice(0,1)) + '</div>' +
+      '<div><div class="nick">' + esc(a.label) + (a.is_default?'<span class="tag-default">默认</span>':'') + '</div><div class="meta" style="margin-bottom:0">' + pill + '</div></div></div>' +
+      '<div class="meta"><span>凭证更新 ' + esc(a.storage_mtime) + '</span><span>' + esc(a.id) + '</span></div>' +
+      '<div class="meta"><span class="mono">' + esc(a.task) + '</span></div>' +
+      '<div class="meta"><span>计划任务 <span class="mono">' + esc(a.sched) + '</span></span><span>每天 ' + a.time + '</span></div>' +
+      '<div class="ops"><span style="font-size:12px;color:var(--ink-3)">启用</span><span class="right">' + ops + '</span></div></div>';
+  }).join('');
+}
+document.getElementById('btn-add-account').addEventListener('click', function(){
+  openModal('添加抖音账号', '<div class="field"><label>备注名（可选）</label><input class="input" id="acc-label" placeholder="例如：小号"><div class="hint">添加后自动创建该账号独立的任务配置与计划任务，再点「重新登录」完成扫码。</div></div>',
+    '<button class="btn btn-ghost" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="closeModal();toast(\'已添加账号（演示）\')">添加账号</button>');
+});
+
+/* ---------- 好友 ---------- */
+function renderFriends(){
+  document.getElementById('fr-acc').textContent = cur().label;
+  var t = curTask();
+  document.getElementById('fr-count').textContent = '共 ' + t.targets.length + ' 人';
+  var el = document.getElementById('fr-table');
+  if(!t.targets.length){ el.innerHTML = '<div class="empty">还没有好友</div>'; return; }
+  el.innerHTML = '<table><colgroup><col style="width:34%"><col style="width:42%"><col style="width:24%"></colgroup><thead><tr><th>备注名</th><th>发送内容</th><th style="text-align:right">操作</th></tr></thead><tbody>' +
+    t.targets.map(function(f,i){
+      var custom = !sameMsgs(f.messages, t.global || []);
+      var pill = custom ? '<span class="pill pill-red"><span class="pd"></span>自定义 ' + f.messages.length + ' 条</span>' : '<span class="pill pill-gray"><span class="pd"></span>沿用全局</span>';
+      return '<tr><td><div class="name">' + esc(f.name) + '</div><div class="sub">备注名定位</div></td><td>' + pill + '</td>' +
+        '<td><div class="row-actions"><button class="text-btn" data-i="' + i + '" data-act="edit">编辑</button><button class="text-btn danger" data-i="' + i + '" data-act="del">删除</button></div></td></tr>';
+    }).join('') + '</tbody></table>';
+  el.querySelectorAll('[data-act]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var i = +b.dataset.i;
+      if(b.dataset.act==='edit') openFriendModal(i);
+      else openModal('删除好友？','<p style="font-size:13px;color:var(--ink-2)">仅从当前账号的任务配置中移除。</p>','<button class="btn btn-ghost" onclick="closeModal()">取消</button><button class="btn btn-danger" onclick="closeModal();toast(\'已删除（演示）\')">确认删除</button>');
+    });
+  });
+}
+document.getElementById('btn-add-friend').addEventListener('click', function(){ openFriendModal(-1); });
+function sameMsgs(a,b){ return JSON.stringify(a)===JSON.stringify(b); }
+/* 好友弹窗：消息列表每条带【编辑】入口（v2 修复点 4） */
+function openFriendModal(i){
+  var t = curTask();
+  var f = i>=0 ? t.targets[i] : null;
+  var body = '<div class="field"><label>备注名（必填）</label><input class="input" id="f-name" value="' + esc(f?f.name:'') + '"><div class="hint">填写抖音私信列表中的<b>备注名</b>，而非原昵称</div></div>' +
+    '<div class="field"><label>发送内容</label><select class="input" id="f-mode"><option value="global">沿用该账号全局内容</option><option value="custom" selected>单独设置内容</option></select></div>' +
+    '<div class="field"><label style="font-size:12.5px;font-weight:600">消息列表（点击「编辑」可修改文字/表情）</label><div class="msg-list" id="f-msgs"></div><button class="btn btn-ghost btn-sm" id="f-add">+ 添加消息</button></div>';
+  openModal(f?'编辑好友「'+esc(f.name)+'」':'添加续火花好友', body, '<button class="btn btn-ghost" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="closeModal();toast(\'已保存（演示）\')">保存</button>');
+  var msgs = f ? JSON.parse(JSON.stringify(f.messages)) : [];
+  renderMsgList('f-msgs', msgs, editMsg);
+  document.getElementById('f-add').addEventListener('click', function(){ msgs.push({type:'text',content:''}); renderMsgList('f-msgs', msgs, editMsg); toast('已添加一条消息，点「编辑」填写内容'); });
+}
+/* 消息列表渲染（带编辑+删除），供好友弹窗/内容视图共用 */
+function renderMsgList(id, msgs, onEdit){
+  var el = document.getElementById(id);
+  el.innerHTML = msgs.map(function(m,j){
+    return '<div class="msg-item">' + msgTag(m) + '<div class="content">' + msgPrev(m) + '</div>' +
+      '<button class="icon-btn" data-j="' + j + '" data-act="edit"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>' +
+      '<button class="icon-btn danger" data-j="' + j + '" data-act="del"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button></div>';
+  }).join('') || '<div class="empty" style="padding:12px 0">暂无消息，点「添加消息」</div>';
+  el.querySelectorAll('[data-act]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var j=+b.dataset.j;
+      if(b.dataset.act==='del'){ msgs.splice(j,1); renderMsgList(id, msgs, onEdit); }
+      else onEdit(msgs, j, function(){ renderMsgList(id, msgs, onEdit); });
+    });
+  });
+}
+function msgTag(m){ var map={text:'文字',random:'随机',douyin_sticker:'表情',image:'动图/图片'}; var cls={text:'tt-text',random:'tt-random',douyin_sticker:'tt-sticker',image:'tt-image'}; return '<span class="type-tag '+(cls[m.type]||'tt-text')+'">'+(map[m.type]||m.type)+'</span>'; }
+function msgPrev(m){
+  if(m.type==='text') return esc(m.content||m.value||'');
+  if(m.type==='image') return '动图/图片：' + esc(m.path||'');
+  if(m.type==='douyin_sticker') return '抖音表情：' + esc(m.sticker||'');
+  if(m.type==='random') return '每日任选 1 条（共 '+(m.choices||[]).length+' 条）';
+  return '';
+}
+/* ---------- 消息编辑器（含表情选择器，v2 新增） ---------- */
+function editMsg(list, j, after){
+  var m = j>=0 ? list[j] : {type:'text', content:''};
+  var body =
+    '<div class="field"><label>消息类型</label><select class="input" id="m-type">' +
+      '<option value="text"' + (m.type==='text'?' selected':'') + '>文字</option>' +
+      '<option value="random"' + (m.type==='random'?' selected':'') + '>随机（多条任选一）</option>' +
+      '<option value="douyin_sticker"' + (m.type==='douyin_sticker'?' selected':'') + '>抖音表情</option>' +
+      '<option value="image"' + (m.type==='image'?' selected':'') + '>动图 / 图片</option></select></div>' +
+    '<div class="field" id="m-text-wrap"><label>文字内容</label><textarea class="input" rows="3" id="m-value">' + esc(m.content||m.value||'') + '</textarea></div>' +
+    '<div class="field" id="m-sticker-wrap" style="display:none"><label>选择抖音表情</label><div class="sticker-grid" id="m-stickers"></div><button class="btn btn-ghost btn-sm sticker-add" id="m-add-sticker" style="width:100%;margin-top:8px">+ 添加自定义表情</button></div>' +
+    '<div class="field" id="m-img-wrap" style="display:none"><label>动图 / 图片文件路径</label><input class="input mono" id="m-path" value="' + esc(m.path||'') + '" placeholder="例如：E:\\素材\\gift.gif（支持 GIF 动图）"><div class="hint">支持 PNG / JPG / GIF / WEBP，GIF 即动图</div></div>';
+  openModal(j>=0?'编辑消息':'添加消息', body, '<button class="btn btn-ghost" onclick="closeModal()">取消</button><button class="btn btn-primary" id="m-save">保存</button>');
+  function sync(){
+    var t = document.getElementById('m-type').value;
+    document.getElementById('m-text-wrap').style.display = (t==='text'||t==='random') ? 'block' : 'none';
+    document.getElementById('m-sticker-wrap').style.display = t==='douyin_sticker' ? 'block' : 'none';
+    document.getElementById('m-img-wrap').style.display = t==='image' ? 'block' : 'none';
+  }
+  document.getElementById('m-type').addEventListener('change', sync);
+  var sel = m.sticker || '';
+  var catKey = m.category || STICKER_CATS[0].key;
+  function curCatItems(){ var c = STICKER_CATS.find(function(x){ return x.key===catKey; }); return c ? c.items : STICKER_CATS[0].items; }
+  function renderStickers(){
+    var tabs = STICKER_CATS.map(function(c){
+      return '<span class="sticker-tab' + (c.key===catKey?' sel':'') + '" data-key="' + esc(c.key) + '">' + esc(c.key) + '</span>';
+    }).join('');
+    var grid = curCatItems().map(function(s){
+      var selCls = (s.name===sel || (sel && s.name===sel)) ? ' sel' : '';
+      return '<div class="sticker-cell' + selCls + '" data-name="' + esc(s.name) + '" data-cat="' + esc(catKey) + '"><img src="' + esc(s.img) + '" loading="lazy" alt=""><span>' + esc(s.name) + '</span></div>';
+    }).join('');
+    document.getElementById('m-stickers').innerHTML = '<div class="sticker-tabs">' + tabs + '</div><div class="sticker-grid">' + grid + '</div>';
+    document.getElementById('m-stickers').querySelectorAll('.sticker-tab').forEach(function(tb){
+      tb.addEventListener('click', function(){ catKey = tb.dataset.key; renderStickers(); });
+    });
+    document.getElementById('m-stickers').querySelectorAll('.sticker-cell').forEach(function(c){
+      c.addEventListener('click', function(){ sel = c.dataset.name; renderStickers(); });
+    });
+  }
+  renderStickers();
+  document.getElementById('m-add-sticker').addEventListener('click', function(){
+    toast('正式版：打开「自定义表情」表单（名称/分类/回退序号）');
+  });
+  sync();
+  document.getElementById('m-save').addEventListener('click', function(){
+    var t = document.getElementById('m-type').value;
+    if(t==='text') m = {type:'text', content: document.getElementById('m-value').value};
+    if(t==='random') m = {type:'random', choices: (m.choices||[]).length ? m.choices : [{type:'text',content: document.getElementById('m-value').value}]};
+    if(t==='douyin_sticker'){ var it = STICKERS.find(function(s){ return s.name===sel; }); m = {type:'douyin_sticker', sticker: sel, category: it?it.key:(catKey||'常用')}; }
+    if(t==='image') m = {type:'image', path: document.getElementById('m-path').value || 'E:\\素材\\gift.gif'};
+    if(j>=0) list[j]=m; else list.push(m);
+    closeModal(); if(after) after();
+  });
+}
+/* ---------- 发送内容 ---------- */
+function renderMessages(){
+  document.getElementById('ms-acc').textContent = cur().label;
+  var t = curTask();
+  t.global = t.global || t.targets[0].messages;
+  renderMsgList('global-msgs', t.global, function(list,j,after){ editMsg(list,j,after); });
+  var el = document.getElementById('friend-msg-table');
+  if(!t.targets.length){ el.innerHTML = '<div class="empty">暂无好友</div>'; return; }
+  el.innerHTML = '<table><colgroup><col style="width:34%"><col style="width:44%"><col style="width:22%"></colgroup><thead><tr><th>好友</th><th>设置</th><th style="text-align:right">操作</th></tr></thead><tbody>' +
+    t.targets.map(function(f,i){
+      var custom = !sameMsgs(f.messages, t.global);
+      return '<tr><td><div class="name">' + esc(f.name) + '</div></td><td>' + (custom?'<span class="pill pill-red"><span class="pd"></span>自定义 '+f.messages.length+' 条</span>':'<span class="pill pill-gray"><span class="pd"></span>沿用全局</span>') + '</td><td><div class="row-actions"><button class="text-btn" data-i="'+i+'">编辑内容</button></div></td></tr>';
+    }).join('') + '</tbody></table>';
+  el.querySelectorAll('.text-btn').forEach(function(b){
+    b.addEventListener('click', function(){
+      var f = t.targets[+b.dataset.i];
+      var msgs = sameMsgs(f.messages, t.global) ? JSON.parse(JSON.stringify(t.global)) : JSON.parse(JSON.stringify(f.messages));
+      openModal('编辑「'+esc(f.name)+'」的发送内容','<p style="font-size:12.5px;color:var(--ink-2);margin-bottom:10px">为当前账号的好友单独设置，保存后不再沿用全局。</p><div class="msg-list" id="c-msgs"></div><button class="btn btn-ghost btn-sm" id="c-add">+ 添加消息</button>',
+        '<button class="btn btn-ghost" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="closeModal();toast(\'已保存（演示）\')">保存内容</button>');
+      renderMsgList('c-msgs', msgs, editMsg);
+      document.getElementById('c-add').addEventListener('click', function(){ msgs.push({type:'text',content:''}); renderMsgList('c-msgs', msgs, editMsg); toast('已添加一条消息，点「编辑」填写内容'); });
+    });
+  });
+}
+document.getElementById('btn-add-global').addEventListener('click', function(){ editMsg(curTask().global, -1, function(){ renderMessages(); }); });
+document.getElementById('btn-save-msgs').addEventListener('click', function(){ toast('已保存到该账号的任务配置（演示）'); });
+
+/* ---------- 定时计划 ---------- */
+function renderSchedule(){
+  var a = cur();
+  document.getElementById('sc-acc').textContent = a.label;
+  document.getElementById('sc-task').textContent = a.sched;
+  document.getElementById('sc-info').innerHTML =
+    '<div class="info-item"><div class="k">计划任务</div><div class="v">' + esc(a.sched) + '</div><div class="s">状态 就绪 · 该账号独立</div></div>' +
+    '<div class="info-item"><div class="k">下次运行</div><div class="v">' + (a.id==='account1'?'2026/10/1 08:00:00':'2026/9/30 17:20:00') + '</div><div class="s">每天 ' + a.time + ' 由 Windows 计划任务调度</div></div>' +
+    '<div class="info-item"><div class="k">执行命令</div><div class="v mono" style="font-size:12px">.venv\\Scripts\\python.exe run.py --account ' + esc(a.id) + '</div><div class="s">只运行该账号，各账号互不影响</div></div>' +
+    '<div class="info-item"><div class="k">起始目录</div><div class="v">E:\\豆包项目库\\自动续火花</div><div class="s">任务从此目录运行</div></div>';
+  var t = curTask();
+  document.getElementById('sc-params').innerHTML =
+    '<div class="info-grid"><div class="info-item"><div class="k">每天发送时间</div><div class="v" id="sc-time">' + a.time + '</div><div class="s">仅当前账号；保存时同步更新 ' + esc(a.sched) + '</div></div>' +
+    '<div class="info-item"><div class="k">防重复（同一天不重复发送同一消息）</div><div class="v">' + (t.prevent?'开':'关') + '</div></div>' +
+    '<div class="info-item"><div class="k">发送间隔下限（秒）</div><div class="v">' + t.interval.min + '</div></div>' +
+    '<div class="info-item"><div class="k">发送间隔上限（秒）</div><div class="v">' + t.interval.max + '</div></div></div>';
+}
+document.getElementById('btn-save-sched').addEventListener('click', function(){ toast('已保存并同步计划任务（演示）'); });
+
+/* ---------- 运行记录 ---------- */
+function renderLogs(){
+  var a = cur();
+  document.getElementById('lg-acc').textContent = a.label;
+  document.getElementById('lg-count').textContent = '账号 ' + esc(a.id) + ' 的记录 · 演示';
+  document.getElementById('lg-table').innerHTML =
+    '<table><colgroup><col style="width:30%"><col style="width:22%"><col style="width:16%"><col style="width:32%"></colgroup><thead><tr><th>时间</th><th>好友</th><th>结果</th><th>消息 ID</th></tr></thead><tbody>' +
+    '<tr><td>2026-09-30 ' + (a.id==='account1'?'07:58:12':'17:19:40') + '</td><td>' + (a.id==='account1'?'朋友A':'小顾') + '</td><td><span class="pill pill-ok"><span class="pd"></span>成功</span></td><td>daily-streak:…' + esc(a.id.slice(-3)) + '</td></tr>' +
+    '<tr><td>2026-09-29 ' + (a.id==='account1'?'08:01:03':'17:20:01') + '</td><td>' + (a.id==='account1'?'朋友A':'小顾') + '</td><td><span class="pill pill-ok"><span class="pd"></span>成功</span></td><td>daily-streak:…</td></tr>' +
+    '</tbody></table>';
+  document.getElementById('lg-tail').textContent = '[' + a.id + '] 2026-09-30 ' + a.time + ':00 INFO 执行开始: 账号 ' + a.id + '\n[' + a.id + '] ... INFO 已发送 1 条消息\n[' + a.id + '] ... INFO 执行结束: 成功 1，失败 0（演示）';
+}
+document.getElementById('btn-refresh-logs').addEventListener('click', function(){ toast('已刷新（演示）'); });
+
+/* ---------- 试运行 / 立即发送 ---------- */
+document.getElementById('btn-dryrun').addEventListener('click', function(){ toast('试运行当前账号「' + cur().label + '」：校验登录并定位好友，不发送（演示）'); });
+document.getElementById('btn-runnow').addEventListener('click', function(){ toast('已触发当前账号「' + cur().label + '」正式发送（演示）'); });
+
+/* ---------- 弹窗 / toast ---------- */
+function openModal(title, bodyHTML, footHTML){
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = bodyHTML;
+  document.getElementById('modal-foot').innerHTML = footHTML || '';
+  document.getElementById('modal-mask').classList.add('open');
+}
+function closeModal(){ document.getElementById('modal-mask').classList.remove('open'); }
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('modal-mask').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeModal(); });
+function toast(msg){
+  var z = document.getElementById('toast-zone');
+  var t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  z.appendChild(t);
+  setTimeout(function(){ t.classList.add('out'); }, 3000);
+  setTimeout(function(){ t.remove(); }, 3400);
+}
+/* 初始 */
+document.body.insertAdjacentHTML('beforeend', '<div id="toast-zone" style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:99;display:flex;flex-direction:column;gap:8px;align-items:center"></div><style>.toast{background:#1B1B23;color:#fff;font-size:13px;padding:10px 18px;border-radius:20px;box-shadow:0 8px 24px rgba(0,0,0,.18);opacity:1;transition:opacity .4s}.toast.out{opacity:0}</style>');
+renderAll();
+goView('dashboard');
+</script>
+</body>
+</html>

@@ -21,6 +21,9 @@ class Message:
 class Target:
     name: str
     messages: tuple[Message, ...]
+    send_time: str | None = None
+    schedule_enabled: bool = True
+    douyin_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -29,6 +32,7 @@ class Sticker:
     category: str | None = None
     accessible_name: str | None = None
     fallback_index: int | None = None
+    tab_index: int | None = None
 
 
 @dataclass(frozen=True)
@@ -43,6 +47,8 @@ class TaskConfig:
     prevent_duplicates: bool
     target_open_retries: int = 1
     target_open_timeout_seconds: float = 15.0
+    send_time: str | None = None
+    schedule_mode: str = "legacy"
 
 
 @dataclass(frozen=True)

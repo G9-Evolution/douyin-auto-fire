@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import replace
 import asyncio
 import json
 import logging
+import os
 import random
 import re
 import hashlib
@@ -23,14 +25,43 @@ from app.notifier import send_dingtalk_notification, send_webhook_notification
 from app.privacy import RedactingFormatter, build_target_aliases, redact_text, target_alias
 from app.progress import create_single_run_progress
 from app.sender import send_message
+from app.validation import record_validation, require_validation
+from app.schedule_journal import write_status
+from app.schedule_slots import normalize_send_time, targets_for_slot
+from app.target_selection import require_revision, select_target
 
 
 LOGGER = logging.getLogger("douyin_sender")
 
 
-async def run(dry_run: bool = False, env_file: str | None = None) -> int:
+def ensure_catchup_same_day(catchup_day: str | None, now: datetime | None = None) -> None:
+    if catchup_day and catchup_day != (now or datetime.now().astimezone()).date().isoformat():
+        raise ConfigError("CATCHUP_EXPIRED：已跨天，停止补跑发送")
+
+
+async def run(dry_run: bool = False, env_file: str | None = None,
+              source: str = "manual", schedule_slot: str | None = None,
+              target_name: str | None = None, task_revision: str | None = None,
+              prevent_duplicates: bool | None = None) -> int:
+    if ((target_name is not None and source != "manual") or (task_revision is not None and target_name is None)
+            or (prevent_duplicates is not None and target_name is None)):
+        raise ConfigError("单好友发送仅用于手动运行，配置版本必须与指定好友同时提供")
     settings = load_settings(env_file)
+    if task_revision is not None:
+        require_revision(settings.task_config_path, task_revision)
     task = load_task(settings)
+    if target_name is not None:
+        task = select_target(task, target_name)
+    if prevent_duplicates is not None:
+        task = replace(task, prevent_duplicates=prevent_duplicates)
+    if task_revision is not None:
+        require_revision(settings.task_config_path, task_revision)
+    if source == "scheduled" and not dry_run:
+        slot = normalize_send_time(schedule_slot or task.send_time, "计划触发时间")
+        due_targets = targets_for_slot(task.targets, task.send_time, slot, task.schedule_mode)
+        if not due_targets:
+            return 0
+        task = replace(task, targets=due_targets)
     settings.artifacts_dir.mkdir(parents=True, exist_ok=True)
     aliases = build_target_aliases(task.targets)
     _configure_logging(settings.artifacts_dir, aliases)
@@ -97,7 +128,10 @@ async def run(dry_run: bool = False, env_file: str | None = None) -> int:
                         LOGGER.info("处理好友: %s", alias)
 
                         # 使用智能重试策略打开目标
-                        await _open_target_with_retry(chat, target.name, task.target_open_retries)
+                        if target.douyin_id:
+                            await _open_target_with_retry(chat, target.name, task.target_open_retries, douyin_id=target.douyin_id)
+                        else:
+                            await _open_target_with_retry(chat, target.name, task.target_open_retries)
 
                         if not dry_run:
                             for message_index, message in enumerate(target.messages):
@@ -113,13 +147,18 @@ async def run(dry_run: bool = False, env_file: str | None = None) -> int:
                                     metrics.record_skipped_message()
                                     continue
 
-                                if task.prevent_duplicates:
-                                    history.reserve(key)
-
+                                # 错时补跑不能跨天发出消息；正常发送不受此标记影响。
+                                ensure_catchup_same_day(os.getenv("DOUYIN_CATCHUP_DATE"))
                                 # 发送单条消息并计时
                                 msg_start = time.time()
                                 await verify_login(page, timeout_ms=3_000)
+                                if task.prevent_duplicates:
+                                    history.reserve(key)
+                                write_status(settings.artifacts_dir / "send-day.json", "unknown_send",
+                                             detail="发送已开始，结果尚不确定")
                                 await send_message(page, chat, message, task.stickers)
+                                write_status(settings.artifacts_dir / "send-day.json", "sent",
+                                             detail="程序记录发送成功；客户端到达仍待验收")
                                 msg_duration = time.time() - msg_start
                                 metrics.record_message_time(msg_duration)
 
@@ -219,9 +258,12 @@ async def run(dry_run: bool = False, env_file: str | None = None) -> int:
     # 输出指标摘要
     LOGGER.info("\n%s", format_metrics_summary(metrics))
 
-    _write_results(settings.artifacts_dir, task.task_id, dry_run, results, aliases)
-    await _notify_dingtalk(settings, task.task_id, dry_run, results, screenshots)
-    await _notify_webhook(settings, task.task_id, dry_run, results, screenshots)
+    _write_results(settings.artifacts_dir, task.task_id, dry_run, results, aliases,
+                   source=source, target_name=target_name,
+                   scheduled_targets=tuple(target.name for target in task.targets) if source == "scheduled" else None)
+    if not os.getenv("DOUYIN_CATCHUP_DATE"):
+        await _notify_dingtalk(settings, task.task_id, dry_run, results, screenshots)
+        await _notify_webhook(settings, task.task_id, dry_run, results, screenshots)
     succeeded = sum(result.status == "success" for result in results)
     failed = sum(result.status == "failed" for result in results)
     LOGGER.info("执行结束: 成功 %d，失败 %d", succeeded, failed)
@@ -236,7 +278,19 @@ def main() -> int:
     try:
         settings = load_settings(args.env_file)
         with run_lock(settings.artifacts_dir / "run.lock"):
-            return asyncio.run(run(dry_run=args.dry_run, env_file=args.env_file))
+            if not args.dry_run:
+                require_validation("default", settings.task_config_path, settings.artifacts_dir)
+            run_kwargs = {"dry_run": args.dry_run, "env_file": args.env_file}
+            if args.target is not None:
+                run_kwargs.update(target_name=args.target, task_revision=args.task_revision)
+            if getattr(args, "prevent_duplicates", None) is not None:
+                run_kwargs.update(prevent_duplicates=args.prevent_duplicates)
+            if args.source == "scheduled":
+                run_kwargs.update(source="scheduled", schedule_slot=args.time_slot)
+            code = asyncio.run(run(**run_kwargs))
+            if code == 0 and args.dry_run and args.target is None:
+                record_validation("default", settings.task_config_path, settings.artifacts_dir)
+            return code
     except (ConfigError, AuthenticationError, RiskControlError, SearchBoxNotReadyError, AlreadyRunningError) as exc:
         print(f"错误: {exc}")
         return 2
@@ -249,6 +303,17 @@ def _parse_cli_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="向多个抖音好友发送配置的消息")
     parser.add_argument("--dry-run", action="store_true", help="只验证登录和好友，不发送消息")
     parser.add_argument("--env-file", help="指定 .env 文件路径")
+    parser.add_argument("--account", help="多账号模式下只运行指定账号 id（如 account1）")
+    parser.add_argument("--source", choices=("manual", "scheduled"), default="manual")
+    parser.add_argument("--time-slot", help="计划任务触发的 HH:MM；手动运行不使用")
+    parser.add_argument("--target", help="只处理当前账号下指定昵称 / 备注的好友")
+    parser.add_argument("--task-revision", help="单好友发送时校验已确认配置的版本")
+    duplicate_group = parser.add_mutually_exclusive_group()
+    duplicate_group.add_argument("--prevent-duplicates", dest="prevent_duplicates", action="store_true",
+                                 help="单好友手动发送时启用防重复")
+    duplicate_group.add_argument("--allow-duplicates", dest="prevent_duplicates", action="store_false",
+                                 help="单好友手动发送时允许重复")
+    parser.set_defaults(prevent_duplicates=None)
     return parser.parse_args()
 
 
@@ -304,6 +369,9 @@ def _write_results(
     dry_run: bool,
     results: list[TargetResult],
     aliases: dict[str, str] | None = None,
+    source: str = "manual",
+    target_name: str | None = None,
+    scheduled_targets: tuple[str, ...] | None = None,
 ) -> None:
     payload = {
         "task_id": task_id,
@@ -312,6 +380,62 @@ def _write_results(
         "results": [_redacted_result(result, aliases) for result in results],
     }
     (artifacts_dir / "result.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    if not dry_run:
+        _append_run_journal(artifacts_dir, payload, source, target_name, scheduled_targets)
+
+
+def _append_run_journal(
+    artifacts_dir: Path,
+    result: dict[str, object],
+    source: str,
+    target_name: str | None,
+    scheduled_targets: tuple[str, ...] | None = None,
+) -> None:
+    """保留近期运行摘要，供本地控制台区分全局、单好友与定时发送。"""
+    path = artifacts_dir / "run-journal.json"
+    try:
+        if path.exists():
+            stored = json.loads(path.read_text(encoding="utf-8"))
+            if not isinstance(stored, list):
+                raise ValueError("运行摘要不是列表")
+        else:
+            stored = []
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        LOGGER.warning("无法读取运行摘要，保留原文件且不覆盖: %s", exc)
+        return
+
+    results = result.get("results", [])
+    items = results if isinstance(results, list) else []
+    sent = sum(int(item.get("sent", 0) or 0) for item in items if isinstance(item, dict))
+    statuses = [item.get("status") for item in items if isinstance(item, dict)]
+    if any(status == "failed" for status in statuses):
+        status = "failed"
+    elif sent:
+        status = "success"
+    elif any(status == "duplicate" for status in statuses):
+        status = "duplicate"
+    elif any(status == "skipped" for status in statuses):
+        status = "skipped"
+    elif any(status == "unknown" for status in statuses):
+        status = "unknown"
+    else:
+        status = "skipped"
+
+    scope = "friend" if target_name else ("scheduled" if source == "scheduled" else "global")
+    target_label = target_name or "全部好友"
+    if scope == "scheduled":
+        target_label = "、".join(scheduled_targets) if scheduled_targets else "定时好友（对象未记录）"
+    stored.append({
+        "finished_at": result.get("finished_at"),
+        "scope": scope,
+        "target": target_label,
+        "status": status,
+        "sent": sent,
+    })
+    try:
+        path.write_text(json.dumps(stored[-80:], ensure_ascii=False, indent=2), encoding="utf-8")
+    except OSError as exc:
+        LOGGER.warning("无法写入运行摘要: %s", exc)
 
 
 def _redacted_result(result: TargetResult, aliases: dict[str, str] | None = None) -> dict:
@@ -381,7 +505,8 @@ def _message_id(index, message) -> str:
     return f"{index}-{hashlib.sha256(payload.encode('utf-8')).hexdigest()[:12]}"
 
 
-async def _open_target_with_retry(chat: DouyinChat, target_name: str, max_retries: int) -> None:
+async def _open_target_with_retry(chat: DouyinChat, target_name: str, max_retries: int,
+                                  douyin_id: str | None = None) -> None:
     """使用智能重试策略打开目标聊天。
 
     Args:
@@ -396,7 +521,10 @@ async def _open_target_with_retry(chat: DouyinChat, target_name: str, max_retrie
 
     for attempt in range(max_retries + 1):
         try:
-            await chat.open_target(target_name, retries=0)  # 单次尝试，重试逻辑在这里控制
+            if douyin_id:
+                await chat.open_target(target_name, retries=0, douyin_id=douyin_id)
+            else:
+                await chat.open_target(target_name, retries=0)  # 单次尝试，重试逻辑在这里控制
             return
         except Exception as exc:
             last_exception = exc

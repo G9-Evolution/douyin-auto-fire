@@ -26,11 +26,14 @@ class DouyinChat:
         self.timeout_ms = timeout_ms
         self.confirm_timeout_ms = confirm_timeout_ms
 
-    async def open_target(self, name: str, retries: int = 1) -> None:
+    async def open_target(self, name: str, retries: int = 1, douyin_id: str | None = None) -> None:
         last_error: Exception | None = None
         for attempt in range(retries + 1):
             try:
-                await self._open_target_once(name)
+                if douyin_id:
+                    await self._open_target_once(name, douyin_id=douyin_id)
+                else:
+                    await self._open_target_once(name)
                 return
             except Exception as exc:
                 last_error = exc
@@ -40,16 +43,22 @@ class DouyinChat:
             raise last_error
         raise PageOperationError("打开聊天失败")
 
-    async def _open_target_once(self, name: str) -> None:
+    async def _open_target_once(self, name: str, douyin_id: str | None = None) -> None:
         search = await first_visible(self.page, SEARCH_INPUTS, self.timeout_ms)
         await search.click()
         await search.fill("")
+        # 恢复原会话搜索入口；抖音号保留在好友信息中，不用于此搜索框。
         await search.fill(name)
         await self.page.wait_for_timeout(1_500)
 
-        result = await self._search_result(name)
-        if result is None:
-            raise PageOperationError("搜索不到目标好友")
+        deadline = asyncio.get_running_loop().time() + self.timeout_ms / 1000
+        while True:
+            result = await self._search_result(name)
+            if result is not None:
+                break
+            if asyncio.get_running_loop().time() >= deadline:
+                raise PageOperationError("等待搜索结果超时，搜索不到目标好友")
+            await self.page.wait_for_timeout(500)
         await result.click(force=True)
         await self._confirm_opened(name)
 
@@ -80,6 +89,7 @@ class DouyinChat:
         # an exact name; only if none is found does pass 2 accept a group member
         # count suffix like "4161(7)" for target "4161". This ordering guarantees
         # "test" never returns "test(7)" or "test1".
+        matches = []
         for index in range(await search_items.count()):
             item = search_items.nth(index)
             name_locator = await _visible_exact_text_locator(item, name_selectors, name)
@@ -88,10 +98,14 @@ class DouyinChat:
             button = item.locator('[class*="SearchPanelitemchat_btn"]').first
             try:
                 if await button.count() and await button.is_visible():
-                    return button
+                    matches.append(button)
             except Exception:
                 continue
 
+        if matches:
+            return _unique_target_result(matches)
+
+        matches = []
         for index in range(await search_items.count()):
             item = search_items.nth(index)
             name_locator = await _visible_group_text_locator(item, name_selectors, name)
@@ -100,9 +114,12 @@ class DouyinChat:
             button = item.locator('[class*="SearchPanelitemchat_btn"]').first
             try:
                 if await button.count() and await button.is_visible():
-                    return button
+                    matches.append(button)
             except Exception:
                 continue
+
+        if matches:
+            return _unique_target_result(matches)
 
         # The nickname node can be hidden while its conversation row is visible.
         # Locate and click the complete row instead of relying on text visibility.
@@ -120,6 +137,7 @@ class DouyinChat:
             '[class*="conversation-item-Title"]',
         )
         for selector in row_selectors:
+            matches = []
             rows = self.page.locator(selector)
             for index in range(await rows.count()):
                 row = rows.nth(index)
@@ -128,12 +146,15 @@ class DouyinChat:
                     continue
                 try:
                     if await row.is_visible():
-                        return row
+                        matches.append(row)
                 except Exception:
                     continue
+            if matches:
+                return _unique_target_result(matches)
 
         # Second-phase group suffix over conversation rows (same priority rule).
         for selector in row_selectors:
+            matches = []
             rows = self.page.locator(selector)
             for index in range(await rows.count()):
                 row = rows.nth(index)
@@ -142,14 +163,17 @@ class DouyinChat:
                     continue
                 try:
                     if await row.is_visible():
-                        return row
+                        matches.append(row)
                 except Exception:
                     continue
+            if matches:
+                return _unique_target_result(matches)
 
         # Some Douyin builds render the title itself as hidden, but keep a visible
         # ancestor as the actionable result. Find that ancestor from the hidden title.
         # This hidden-title fallback stays STRICT exact only: a hidden stale name
         # node (group or plain) must never be trusted to resolve the recipient.
+        matches = []
         hidden_titles = self.page.locator('[class*="conversationConversationItemtitle"]')
         for index in range(await hidden_titles.count()):
             title = hidden_titles.nth(index)
@@ -159,9 +183,9 @@ class DouyinChat:
                 "xpath=ancestor::*[contains(@class, 'conversationConversationItem')][1]"
             )
             if await row.count() and await row.is_visible():
-                return row
+                matches.append(row)
 
-        return None
+        return _unique_target_result(matches) if matches else None
 
     async def message_input(self) -> Locator:
         return await first_visible(self.page, MESSAGE_INPUTS, self.timeout_ms)
@@ -222,6 +246,12 @@ class DouyinChat:
             except Exception:
                 continue
         return False
+
+
+def _unique_target_result(matches: list[Locator]) -> Locator:
+    if len(matches) != 1:
+        raise PageOperationError("存在多个同名目标，无法确认唯一收件人，已停止")
+    return matches[0]
 
 
 async def _visible_exact_text_in(container: Locator, selectors: tuple[str, ...], expected: str) -> bool:
@@ -323,6 +353,14 @@ async def _group_name_matches(locator: Locator, expected: str) -> bool:
 
 
 async def first_visible(page: Page, selectors: tuple[str, ...], timeout_ms: int = 15_000) -> Locator:
+    if selectors == SEARCH_INPUTS:
+        combined = ", ".join(f"{selector}:visible" for selector in selectors)
+        locator = page.locator(combined).first
+        try:
+            await locator.wait_for(state="visible", timeout=timeout_ms)
+            return locator
+        except Exception:
+            raise PageOperationError("好友搜索框未就绪，任务已停止")
     per_selector = max(500, timeout_ms // max(1, len(selectors)))
     for selector in selectors:
         locator = page.locator(selector).first

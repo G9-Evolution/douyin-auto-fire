@@ -25,6 +25,46 @@ async def test_search_failure_raises_without_page_text_or_real_name(monkeypatch)
     assert "张三" not in message
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("douyin_id", [None, "123456789", "001234567"])
+async def test_friend_number_does_not_replace_conversation_name(monkeypatch, douyin_id) -> None:
+    page = MagicMock()
+    page.wait_for_timeout = AsyncMock()
+    search = MagicMock()
+    search.click = AsyncMock()
+    search.fill = AsyncMock()
+    monkeypatch.setattr("app.douyin.first_visible", AsyncMock(return_value=search))
+    result = MagicMock()
+    result.click = AsyncMock()
+    chat = DouyinChat(page)
+    chat._search_result = AsyncMock(return_value=result)
+    chat._confirm_opened = AsyncMock()
+
+    await chat.open_target("好友A", retries=0, douyin_id=douyin_id)
+
+    assert [call.args[0] for call in search.fill.await_args_list] == ["", "好友A"]
+    chat._search_result.assert_awaited_once_with("好友A")
+    chat._confirm_opened.assert_awaited_once_with("好友A")
+
+
+@pytest.mark.asyncio
+async def test_name_search_failure_with_number_stops_before_opening_chat(monkeypatch) -> None:
+    page = MagicMock()
+    page.wait_for_timeout = AsyncMock()
+    search = MagicMock()
+    search.click = AsyncMock()
+    search.fill = AsyncMock()
+    monkeypatch.setattr("app.douyin.first_visible", AsyncMock(return_value=search))
+    chat = DouyinChat(page, timeout_ms=0)
+    chat._search_result = AsyncMock(return_value=None)
+    chat._confirm_opened = AsyncMock()
+
+    with pytest.raises(PageOperationError, match="搜索不到目标好友"):
+        await chat.open_target("好友A", retries=0, douyin_id="123456789")
+
+    chat._confirm_opened.assert_not_awaited()
+
+
 def _locator_group(items: list[MagicMock]) -> MagicMock:
     group = MagicMock()
     group.count = AsyncMock(return_value=len(items))

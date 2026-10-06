@@ -1,12 +1,1256 @@
 {
+  "续火花": {
+    "category": "常用",
+    "tab_index": 0,
+    "img": "assets/stickers/分类1-000.webp",
+    "fallback_index": 0
+  },
   "比心": {
     "category": "常用",
-    "accessible_name": "比心",
+    "tab_index": 0,
+    "img": "assets/stickers/分类1-001.webp",
+    "fallback_index": 1
+  },
+  "桂兔绣月": {
+    "category": "常用",
+    "tab_index": 0,
+    "img": "assets/stickers/分类1-002.webp",
+    "fallback_index": 2
+  },
+  "礼敬山河": {
+    "category": "常用",
+    "tab_index": 0,
+    "img": "assets/stickers/分类1-003.webp",
     "fallback_index": 3
+  },
+  "在干嘛": {
+    "category": "常用",
+    "tab_index": 0,
+    "img": "assets/stickers/分类1-004.webp",
+    "fallback_index": 4
+  },
+  "笑死": {
+    "category": "常用",
+    "tab_index": 0,
+    "img": "assets/stickers/分类1-005.webp",
+    "fallback_index": 5
+  },
+  "麻了": {
+    "category": "常用",
+    "tab_index": 0,
+    "img": "assets/stickers/分类1-006.webp",
+    "fallback_index": 6
+  },
+  "躺平": {
+    "category": "常用",
+    "tab_index": 0,
+    "img": "assets/stickers/分类1-007.webp",
+    "fallback_index": 7
+  },
+  "摇骰子": {
+    "category": "常用",
+    "tab_index": 0,
+    "img": "assets/stickers/分类1-008.webp",
+    "fallback_index": 8
+  },
+  "猜拳": {
+    "category": "常用",
+    "tab_index": 0,
+    "img": "assets/stickers/分类1-009.webp",
+    "fallback_index": 9
   },
   "开心": {
     "category": "常用",
-    "accessible_name": "开心",
+    "tab_index": 0,
+    "img": "assets/stickers/分类1-010.webp",
+    "fallback_index": 10
+  },
+  "嗨": {
+    "category": "常用",
+    "tab_index": 0,
+    "img": "assets/stickers/分类1-011.webp",
+    "fallback_index": 11
+  },
+  "吹泡泡": {
+    "category": "常用",
+    "tab_index": 0,
+    "img": "assets/stickers/分类1-012.webp",
+    "fallback_index": 12
+  },
+  "黑人问号": {
+    "category": "常用",
+    "tab_index": 0,
+    "img": "assets/stickers/分类1-013.webp",
+    "fallback_index": 13
+  },
+  "早上好": {
+    "category": "常用",
+    "tab_index": 0,
+    "img": "assets/stickers/分类1-014.webp",
+    "fallback_index": 14
+  },
+  "晚上好": {
+    "category": "常用",
+    "tab_index": 0,
+    "img": "assets/stickers/分类1-015.webp",
+    "fallback_index": 15
+  },
+  "早点睡": {
+    "category": "常用",
+    "tab_index": 0,
+    "img": "assets/stickers/分类1-016.webp",
+    "fallback_index": 16
+  },
+  "爱心": {
+    "category": "常用",
+    "tab_index": 0,
+    "img": "assets/stickers/分类1-017.webp",
+    "fallback_index": 17
+  },
+  "便便": {
+    "category": "常用",
+    "tab_index": 0,
+    "img": "assets/stickers/分类1-018.webp",
+    "fallback_index": 18
+  },
+  "戳一戳": {
+    "category": "常用",
+    "tab_index": 0,
+    "img": "assets/stickers/分类1-019.webp",
+    "fallback_index": 19
+  },
+  "绝了": {
+    "category": "常用",
+    "tab_index": 0,
+    "img": "assets/stickers/分类1-020.webp",
+    "fallback_index": 20
+  },
+  "已阅": {
+    "category": "常用",
+    "tab_index": 0,
+    "img": "assets/stickers/分类1-021.webp",
+    "fallback_index": 21
+  },
+  "生日祝福": {
+    "category": "常用",
+    "tab_index": 0,
+    "img": "assets/stickers/分类1-022.webp",
+    "fallback_index": 22
+  },
+  "贴纸A-1": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-000.webp",
+    "fallback_index": 0
+  },
+  "贴纸A-2": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-001.webp",
+    "fallback_index": 1
+  },
+  "贴纸A-3": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-002.webp",
+    "fallback_index": 2
+  },
+  "贴纸A-4": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-003.webp",
+    "fallback_index": 3
+  },
+  "贴纸A-5": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-004.webp",
+    "fallback_index": 4
+  },
+  "贴纸A-6": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-005.webp",
     "fallback_index": 5
+  },
+  "贴纸A-7": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-006.webp",
+    "fallback_index": 6
+  },
+  "贴纸A-8": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-007.webp",
+    "fallback_index": 7
+  },
+  "贴纸A-9": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-008.webp",
+    "fallback_index": 8
+  },
+  "贴纸A-10": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-009.webp",
+    "fallback_index": 9
+  },
+  "贴纸A-11": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-010.webp",
+    "fallback_index": 10
+  },
+  "贴纸A-12": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-011.webp",
+    "fallback_index": 11
+  },
+  "贴纸A-13": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-012.webp",
+    "fallback_index": 12
+  },
+  "贴纸A-14": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-013.webp",
+    "fallback_index": 13
+  },
+  "贴纸A-15": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-014.webp",
+    "fallback_index": 14
+  },
+  "贴纸A-16": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-015.webp",
+    "fallback_index": 15
+  },
+  "贴纸A-17": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-016.webp",
+    "fallback_index": 16
+  },
+  "贴纸A-18": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-017.webp",
+    "fallback_index": 17
+  },
+  "贴纸A-19": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-018.webp",
+    "fallback_index": 18
+  },
+  "贴纸A-20": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-019.webp",
+    "fallback_index": 19
+  },
+  "贴纸A-21": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-020.webp",
+    "fallback_index": 20
+  },
+  "贴纸A-22": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-021.webp",
+    "fallback_index": 21
+  },
+  "贴纸A-23": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-022.webp",
+    "fallback_index": 22
+  },
+  "贴纸A-24": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-023.webp",
+    "fallback_index": 23
+  },
+  "贴纸A-25": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-024.webp",
+    "fallback_index": 24
+  },
+  "贴纸A-26": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-025.webp",
+    "fallback_index": 25
+  },
+  "贴纸A-27": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-026.webp",
+    "fallback_index": 26
+  },
+  "贴纸A-28": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-027.webp",
+    "fallback_index": 27
+  },
+  "贴纸A-29": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-028.webp",
+    "fallback_index": 28
+  },
+  "贴纸A-30": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-029.webp",
+    "fallback_index": 29
+  },
+  "贴纸A-31": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-030.webp",
+    "fallback_index": 30
+  },
+  "贴纸A-32": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-031.webp",
+    "fallback_index": 31
+  },
+  "贴纸A-33": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-032.webp",
+    "fallback_index": 32
+  },
+  "贴纸A-34": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-033.webp",
+    "fallback_index": 33
+  },
+  "贴纸A-35": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-034.webp",
+    "fallback_index": 34
+  },
+  "贴纸A-36": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-035.webp",
+    "fallback_index": 35
+  },
+  "贴纸A-37": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-036.webp",
+    "fallback_index": 36
+  },
+  "贴纸A-38": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-037.webp",
+    "fallback_index": 37
+  },
+  "贴纸A-39": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-038.webp",
+    "fallback_index": 38
+  },
+  "贴纸A-40": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-039.webp",
+    "fallback_index": 39
+  },
+  "贴纸A-41": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-040.webp",
+    "fallback_index": 40
+  },
+  "贴纸A-42": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-041.webp",
+    "fallback_index": 41
+  },
+  "贴纸A-43": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-042.webp",
+    "fallback_index": 42
+  },
+  "贴纸A-44": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-043.webp",
+    "fallback_index": 43
+  },
+  "贴纸A-45": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-044.webp",
+    "fallback_index": 44
+  },
+  "贴纸A-46": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-045.webp",
+    "fallback_index": 45
+  },
+  "贴纸A-47": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-046.webp",
+    "fallback_index": 46
+  },
+  "贴纸A-48": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-047.webp",
+    "fallback_index": 47
+  },
+  "贴纸A-49": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-048.webp",
+    "fallback_index": 48
+  },
+  "贴纸A-50": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-049.webp",
+    "fallback_index": 49
+  },
+  "贴纸A-201": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-200.webp",
+    "fallback_index": 200
+  },
+  "贴纸A-202": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-201.webp",
+    "fallback_index": 201
+  },
+  "贴纸A-203": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-202.webp",
+    "fallback_index": 202
+  },
+  "贴纸A-204": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-203.webp",
+    "fallback_index": 203
+  },
+  "贴纸A-205": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-204.webp",
+    "fallback_index": 204
+  },
+  "贴纸A-206": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-205.webp",
+    "fallback_index": 205
+  },
+  "贴纸A-207": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-206.webp",
+    "fallback_index": 206
+  },
+  "贴纸A-208": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-207.webp",
+    "fallback_index": 207
+  },
+  "贴纸A-209": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-208.webp",
+    "fallback_index": 208
+  },
+  "贴纸A-210": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-209.webp",
+    "fallback_index": 209
+  },
+  "贴纸A-211": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-210.webp",
+    "fallback_index": 210
+  },
+  "贴纸A-212": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-211.webp",
+    "fallback_index": 211
+  },
+  "贴纸A-213": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-212.webp",
+    "fallback_index": 212
+  },
+  "贴纸A-214": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-213.webp",
+    "fallback_index": 213
+  },
+  "贴纸A-215": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-214.webp",
+    "fallback_index": 214
+  },
+  "贴纸A-216": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-215.webp",
+    "fallback_index": 215
+  },
+  "贴纸A-217": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-216.webp",
+    "fallback_index": 216
+  },
+  "贴纸A-218": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-217.webp",
+    "fallback_index": 217
+  },
+  "贴纸A-219": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-218.webp",
+    "fallback_index": 218
+  },
+  "贴纸A-220": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-219.webp",
+    "fallback_index": 219
+  },
+  "贴纸A-221": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-220.webp",
+    "fallback_index": 220
+  },
+  "贴纸A-222": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-221.webp",
+    "fallback_index": 221
+  },
+  "贴纸A-223": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-222.webp",
+    "fallback_index": 222
+  },
+  "贴纸A-224": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-223.webp",
+    "fallback_index": 223
+  },
+  "贴纸A-225": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-224.webp",
+    "fallback_index": 224
+  },
+  "贴纸A-226": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-225.webp",
+    "fallback_index": 225
+  },
+  "贴纸A-227": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-226.webp",
+    "fallback_index": 226
+  },
+  "贴纸A-228": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-227.webp",
+    "fallback_index": 227
+  },
+  "贴纸A-229": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-228.webp",
+    "fallback_index": 228
+  },
+  "贴纸A-230": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-229.webp",
+    "fallback_index": 229
+  },
+  "贴纸A-231": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-230.webp",
+    "fallback_index": 230
+  },
+  "贴纸A-232": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-231.webp",
+    "fallback_index": 231
+  },
+  "贴纸A-233": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-232.webp",
+    "fallback_index": 232
+  },
+  "贴纸A-234": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-233.webp",
+    "fallback_index": 233
+  },
+  "贴纸A-235": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-234.webp",
+    "fallback_index": 234
+  },
+  "贴纸A-236": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-235.webp",
+    "fallback_index": 235
+  },
+  "贴纸A-237": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-236.webp",
+    "fallback_index": 236
+  },
+  "贴纸A-238": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-237.webp",
+    "fallback_index": 237
+  },
+  "贴纸A-239": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-238.webp",
+    "fallback_index": 238
+  },
+  "贴纸A-240": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-239.webp",
+    "fallback_index": 239
+  },
+  "贴纸A-241": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-240.webp",
+    "fallback_index": 240
+  },
+  "贴纸A-242": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-241.webp",
+    "fallback_index": 241
+  },
+  "贴纸A-243": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-242.webp",
+    "fallback_index": 242
+  },
+  "贴纸A-244": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-243.webp",
+    "fallback_index": 243
+  },
+  "贴纸A-245": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-244.webp",
+    "fallback_index": 244
+  },
+  "贴纸A-246": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-245.webp",
+    "fallback_index": 245
+  },
+  "贴纸A-247": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-246.webp",
+    "fallback_index": 246
+  },
+  "贴纸A-248": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-247.webp",
+    "fallback_index": 247
+  },
+  "贴纸A-249": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-248.webp",
+    "fallback_index": 248
+  },
+  "贴纸A-250": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-249.webp",
+    "fallback_index": 249
+  },
+  "贴纸A-651": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-650.webp",
+    "fallback_index": 650
+  },
+  "贴纸A-652": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-651.webp",
+    "fallback_index": 651
+  },
+  "贴纸A-653": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-652.webp",
+    "fallback_index": 652
+  },
+  "贴纸A-654": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-653.webp",
+    "fallback_index": 653
+  },
+  "贴纸A-655": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-654.webp",
+    "fallback_index": 654
+  },
+  "贴纸A-656": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-655.webp",
+    "fallback_index": 655
+  },
+  "贴纸A-657": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-656.webp",
+    "fallback_index": 656
+  },
+  "贴纸A-658": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-657.webp",
+    "fallback_index": 657
+  },
+  "贴纸A-659": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-658.webp",
+    "fallback_index": 658
+  },
+  "贴纸A-660": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-659.webp",
+    "fallback_index": 659
+  },
+  "贴纸A-661": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-660.webp",
+    "fallback_index": 660
+  },
+  "贴纸A-662": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-661.webp",
+    "fallback_index": 661
+  },
+  "贴纸A-663": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-662.webp",
+    "fallback_index": 662
+  },
+  "贴纸A-664": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-663.webp",
+    "fallback_index": 663
+  },
+  "贴纸A-665": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-664.webp",
+    "fallback_index": 664
+  },
+  "贴纸A-666": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-665.webp",
+    "fallback_index": 665
+  },
+  "贴纸A-667": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-666.webp",
+    "fallback_index": 666
+  },
+  "贴纸A-668": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-667.webp",
+    "fallback_index": 667
+  },
+  "贴纸A-669": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-668.webp",
+    "fallback_index": 668
+  },
+  "贴纸A-670": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-669.webp",
+    "fallback_index": 669
+  },
+  "贴纸A-671": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-670.webp",
+    "fallback_index": 670
+  },
+  "贴纸A-672": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-671.webp",
+    "fallback_index": 671
+  },
+  "贴纸A-673": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-672.webp",
+    "fallback_index": 672
+  },
+  "贴纸A-674": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-673.webp",
+    "fallback_index": 673
+  },
+  "贴纸A-675": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-674.webp",
+    "fallback_index": 674
+  },
+  "贴纸A-676": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-675.webp",
+    "fallback_index": 675
+  },
+  "贴纸A-677": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-676.webp",
+    "fallback_index": 676
+  },
+  "贴纸A-678": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-677.webp",
+    "fallback_index": 677
+  },
+  "贴纸A-679": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-678.webp",
+    "fallback_index": 678
+  },
+  "贴纸A-680": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-679.webp",
+    "fallback_index": 679
+  },
+  "贴纸A-681": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-680.webp",
+    "fallback_index": 680
+  },
+  "贴纸A-682": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-681.webp",
+    "fallback_index": 681
+  },
+  "贴纸A-683": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-682.webp",
+    "fallback_index": 682
+  },
+  "贴纸A-684": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-683.webp",
+    "fallback_index": 683
+  },
+  "贴纸A-685": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-684.webp",
+    "fallback_index": 684
+  },
+  "贴纸A-686": {
+    "category": "贴纸A",
+    "tab_index": 2,
+    "img": "assets/stickers/分类3-685.webp",
+    "fallback_index": 685
+  },
+  "贴纸B-1": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-000.webp",
+    "fallback_index": 0
+  },
+  "贴纸B-2": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-001.webp",
+    "fallback_index": 1
+  },
+  "贴纸B-3": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-002.webp",
+    "fallback_index": 2
+  },
+  "贴纸B-4": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-003.webp",
+    "fallback_index": 3
+  },
+  "贴纸B-5": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-004.webp",
+    "fallback_index": 4
+  },
+  "贴纸B-6": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-005.webp",
+    "fallback_index": 5
+  },
+  "贴纸B-7": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-006.webp",
+    "fallback_index": 6
+  },
+  "贴纸B-8": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-007.webp",
+    "fallback_index": 7
+  },
+  "贴纸B-9": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-008.webp",
+    "fallback_index": 8
+  },
+  "贴纸B-10": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-009.webp",
+    "fallback_index": 9
+  },
+  "贴纸B-11": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-010.webp",
+    "fallback_index": 10
+  },
+  "贴纸B-12": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-011.webp",
+    "fallback_index": 11
+  },
+  "贴纸B-13": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-012.webp",
+    "fallback_index": 12
+  },
+  "贴纸B-14": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-013.webp",
+    "fallback_index": 13
+  },
+  "贴纸B-15": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-014.webp",
+    "fallback_index": 14
+  },
+  "贴纸B-16": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-015.webp",
+    "fallback_index": 15
+  },
+  "贴纸B-17": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-016.webp",
+    "fallback_index": 16
+  },
+  "贴纸B-18": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-017.webp",
+    "fallback_index": 17
+  },
+  "贴纸B-19": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-018.webp",
+    "fallback_index": 18
+  },
+  "贴纸B-20": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-019.webp",
+    "fallback_index": 19
+  },
+  "贴纸B-21": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-020.webp",
+    "fallback_index": 20
+  },
+  "贴纸B-22": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-021.webp",
+    "fallback_index": 21
+  },
+  "贴纸B-23": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-022.webp",
+    "fallback_index": 22
+  },
+  "贴纸B-24": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-023.webp",
+    "fallback_index": 23
+  },
+  "贴纸B-25": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-024.webp",
+    "fallback_index": 24
+  },
+  "贴纸B-26": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-025.webp",
+    "fallback_index": 25
+  },
+  "贴纸B-27": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-026.webp",
+    "fallback_index": 26
+  },
+  "贴纸B-28": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-027.webp",
+    "fallback_index": 27
+  },
+  "贴纸B-29": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-028.webp",
+    "fallback_index": 28
+  },
+  "贴纸B-30": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-029.webp",
+    "fallback_index": 29
+  },
+  "贴纸B-31": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-030.webp",
+    "fallback_index": 30
+  },
+  "贴纸B-32": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-031.webp",
+    "fallback_index": 31
+  },
+  "贴纸B-33": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-032.webp",
+    "fallback_index": 32
+  },
+  "贴纸B-34": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-033.webp",
+    "fallback_index": 33
+  },
+  "贴纸B-35": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-034.webp",
+    "fallback_index": 34
+  },
+  "贴纸B-36": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-035.webp",
+    "fallback_index": 35
+  },
+  "贴纸B-37": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-036.webp",
+    "fallback_index": 36
+  },
+  "贴纸B-38": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-037.webp",
+    "fallback_index": 37
+  },
+  "贴纸B-39": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-038.webp",
+    "fallback_index": 38
+  },
+  "贴纸B-40": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-039.webp",
+    "fallback_index": 39
+  },
+  "贴纸B-41": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-040.webp",
+    "fallback_index": 40
+  },
+  "贴纸B-42": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-041.webp",
+    "fallback_index": 41
+  },
+  "贴纸B-43": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-042.webp",
+    "fallback_index": 42
+  },
+  "贴纸B-44": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-043.webp",
+    "fallback_index": 43
+  },
+  "贴纸B-45": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-044.webp",
+    "fallback_index": 44
+  },
+  "贴纸B-46": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-045.webp",
+    "fallback_index": 45
+  },
+  "贴纸B-47": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-046.webp",
+    "fallback_index": 46
+  },
+  "贴纸B-48": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-047.webp",
+    "fallback_index": 47
+  },
+  "贴纸B-49": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-048.webp",
+    "fallback_index": 48
+  },
+  "贴纸B-50": {
+    "category": "贴纸B",
+    "tab_index": 3,
+    "img": "assets/stickers/分类4-049.webp",
+    "fallback_index": 49
   }
 }
